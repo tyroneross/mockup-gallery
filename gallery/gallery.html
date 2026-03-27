@@ -679,22 +679,23 @@ function renderComponents() {
     const ec = esc(c), ef = esc(m.file);
     const isImpl = implData[m.file]?.[c]?.status === 'implemented';
     const implCodePath = implData[m.file]?.[c]?.codePath || '';
-    html += `<div class="cp-item">
+    const compIdx = i;
+    html += `<div class="cp-item" data-file="${ef}" data-comp-idx="${compIdx}">
       <div class="cp-item-header">
         <div class="cp-item-name">${ec}</div>
         ${isImpl
-          ? `<span class="impl-btn done" title="Implemented">&#10003;</span>`
-          : `<span class="impl-btn" onclick="markImpl('${ef}','${ec}')" title="Mark as implemented">&#9675;</span>`
+          ? `<span class="impl-btn done" title="Implemented in code">Built</span>`
+          : ''
         }
-        <span class="cp-item-del" onclick="removeCompAndRender('${ef}','${ec}')" title="Remove">&#x2715;</span>
+        <span class="cp-item-del" data-action="del" data-idx="${compIdx}" title="Remove">&#x2715;</span>
       </div>
       <div class="rating-group">
         ${['yay', 'maybe', 'ok', 'nay'].map(v =>
-          `<button class="rate-btn sm${cr === v ? ' on-' + v : ''}" onclick="rateComp('${ef}','${ec}','${v}')">${{ yay: 'Y', maybe: '?', ok: 'C', nay: 'N' }[v]}</button>`
+          `<button class="rate-btn sm${cr === v ? ' on-' + v : ''}" data-action="rate-comp" data-idx="${compIdx}" data-rating="${v}">${{ yay: 'Y', maybe: '?', ok: 'C', nay: 'N' }[v]}</button>`
         ).join('')}
       </div>
-      <input type="text" class="cp-item-note" placeholder="Note on ${ec}..." value="${esc(cn)}"
-        onblur="noteComp('${ef}','${ec}',this.value.trim())">
+      <input type="text" class="cp-item-note" placeholder="Note..." value="${esc(cn)}"
+        data-action="note-comp" data-idx="${compIdx}">
       ${implCodePath ? `<div class="impl-path">${esc(implCodePath)}</div>` : ''}
     </div>`;
   });
@@ -718,6 +719,38 @@ function removeCompAndRender(file, name) {
   removeComp(file, name);
   renderComponents();
 }
+
+// Event delegation for component panel — avoids inline onclick with special chars
+document.getElementById('cp-content').addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const m = M[S.cur];
+  const idx = parseInt(btn.dataset.idx);
+  const comps = allComps(m.file);
+  const compName = comps[idx];
+  if (!compName && btn.dataset.action !== 'add') return;
+
+  switch (btn.dataset.action) {
+    case 'rate-comp':
+      rateComp(m.file, compName, btn.dataset.rating);
+      renderComponents();
+      break;
+    case 'impl':
+      markImpl(m.file, compName);
+      break;
+    case 'del':
+      removeCompAndRender(m.file, compName);
+      break;
+  }
+});
+
+document.getElementById('cp-content').addEventListener('blur', function(e) {
+  if (e.target.dataset?.action === 'note-comp') {
+    const idx = parseInt(e.target.dataset.idx);
+    const comps = allComps(M[S.cur].file);
+    noteComp(M[S.cur].file, comps[idx], e.target.value.trim());
+  }
+}, true);
 
 function confirmAddComp() {
   if (M.length === 0) return;
