@@ -1,0 +1,1038 @@
+{
+  "id": "live_iyzADMfmss",
+  "url": "http://localhost:8787",
+  "name": "/",
+  "viewport": {
+    "name": "desktop",
+    "width": 1920,
+    "height": 1080
+  },
+  "createdAt": "2026-03-27T08:42:10.651Z",
+  "pageIndex": 0,
+  "actions": [
+    {
+      "type": "navigate",
+      "timestamp": "2026-03-27T08:42:10.651Z",
+      "params": {
+        "url": "http://localhost:8787"
+      },
+      "success": true,
+      "duration": 652
+    },
+    {
+      "type": "screenshot",
+      "timestamp": "2026-03-27T08:42:58.407Z",
+      "params": {
+        "name": "screenshot-1774600978186",
+        "path": ".ibr/sessions/live_iyzADMfmss/screenshot-1774600978186.png",
+        "elementsCount": 28,
+        "issuesCount": 10
+      },
+      "success": true,
+      "duration": 222
+    },
+    {
+      "type": "click",
+      "timestamp": "2026-03-27T08:46:27.825Z",
+      "params": {
+        "selector": "#select-btn"
+      },
+      "success": true,
+      "duration": 53
+    },
+    {
+      "type": "screenshot",
+      "timestamp": "2026-03-27T09:32:47.641Z",
+      "params": {
+        "name": "screenshot-1774603967460",
+        "path": ".ibr/sessions/live_iyzADMfmss/screenshot-1774603967460.png",
+        "elementsCount": 37,
+        "issuesCount": 16
+      },
+      "success": true,
+      "duration": 182
+    },
+    {
+      "type": "click",
+      "timestamp": "2026-03-27T09:33:34.321Z",
+      "params": {
+        "selector": "button[data-route='/settings']"
+      },
+      "success": true,
+      "duration": 42
+    },
+    {
+      "type": "screenshot",
+      "timestamp": "2026-03-27T09:34:15.113Z",
+      "params": {
+        "name": "screenshot-1774604054907",
+        "path": ".ibr/sessions/live_iyzADMfmss/screenshot-1774604054907.png",
+        "elementsCount": 28,
+        "issuesCount": 10
+      },
+      "success": true,
+      "duration": 206
+    }
+  ],
+  "elements": [
+    {
+      "selector": "#prev-btn",
+      "tagName": "button",
+      "id": "prev-btn",
+      "className": "arrow-btn",
+      "text": "←",
+      "bounds": {
+        "x": 280,
+        "y": 14,
+        "width": 28,
+        "height": 28
+      },
+      "computedStyles": {
+        "cursor": "default",
+        "color": "rgb(90, 90, 114)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": false,
+        "hasHref": false,
+        "isDisabled": true,
+        "tabIndex": 0,
+        "cursor": "default"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#next-btn",
+      "tagName": "button",
+      "id": "next-btn",
+      "className": "arrow-btn",
+      "text": "→",
+      "bounds": {
+        "x": 320,
+        "y": 14,
+        "width": 28,
+        "height": 28
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(90, 90, 114)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": false,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#select-btn",
+      "tagName": "button",
+      "id": "select-btn",
+      "className": "select-btn",
+      "text": "Select",
+      "bounds": {
+        "x": 1584,
+        "y": 12,
+        "width": 71,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(165, 180, 252)",
+        "backgroundColor": "rgba(129, 140, 248, 0.15)"
+      },
+      "interactive": {
+        "hasOnClick": false,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#page-rating > button.rate-btn:nth-of-type(1)",
+      "tagName": "button",
+      "className": "rate-btn",
+      "text": "Yay",
+      "bounds": {
+        "x": 1667,
+        "y": 13,
+        "width": 48,
+        "height": 30
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(157, 157, 181)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#page-rating > button.rate-btn:nth-of-type(2)",
+      "tagName": "button",
+      "className": "rate-btn",
+      "text": "Nay",
+      "bounds": {
+        "x": 1719,
+        "y": 13,
+        "width": 50,
+        "height": 30
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(157, 157, 181)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#archive-btn",
+      "tagName": "button",
+      "id": "archive-btn",
+      "className": "archive-btn",
+      "text": "Archive",
+      "bounds": {
+        "x": 1780,
+        "y": 14,
+        "width": 55,
+        "height": 28
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(90, 90, 114)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": false,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#refresh-btn",
+      "tagName": "button",
+      "id": "refresh-btn",
+      "className": "refresh-btn",
+      "text": "Refresh",
+      "bounds": {
+        "x": 1847,
+        "y": 16,
+        "width": 53,
+        "height": 24
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(90, 90, 114)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": false,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#cp-add-btn",
+      "tagName": "button",
+      "id": "cp-add-btn",
+      "className": "cp-add-btn",
+      "text": "+",
+      "bounds": {
+        "x": 1884,
+        "y": 73,
+        "width": 20,
+        "height": 20
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(90, 90, 114)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": false,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#cp-content > div.cp-all:nth-of-type(1) > div.rating-group:nth-of-type(2) > button.rate-btn:nth-of-type(1)",
+      "tagName": "button",
+      "className": "rate-btn sm",
+      "text": "Y",
+      "bounds": {
+        "x": 1657,
+        "y": 129,
+        "width": 29,
+        "height": 24
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(157, 157, 181)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#cp-content > div.cp-all:nth-of-type(1) > div.rating-group:nth-of-type(2) > button.rate-btn:nth-of-type(2)",
+      "tagName": "button",
+      "className": "rate-btn sm",
+      "text": "N",
+      "bounds": {
+        "x": 1690,
+        "y": 129,
+        "width": 29,
+        "height": 24
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(157, 157, 181)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#cp-content > div.cp-item:nth-of-type(2) > div.rating-group:nth-of-type(2) > button.rate-btn:nth-of-type(1)",
+      "tagName": "button",
+      "className": "rate-btn sm",
+      "text": "Y",
+      "bounds": {
+        "x": 1657,
+        "y": 204,
+        "width": 29,
+        "height": 24
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(157, 157, 181)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": false,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#cp-content > div.cp-item:nth-of-type(2) > div.rating-group:nth-of-type(2) > button.rate-btn:nth-of-type(2)",
+      "tagName": "button",
+      "className": "rate-btn sm",
+      "text": "N",
+      "bounds": {
+        "x": 1690,
+        "y": 204,
+        "width": 29,
+        "height": 24
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(157, 157, 181)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": false,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#cp-content > div.cp-item:nth-of-type(2) > input.cp-item-note",
+      "tagName": "input",
+      "className": "cp-item-note",
+      "bounds": {
+        "x": 1657,
+        "y": 232,
+        "width": 247,
+        "height": 21
+      },
+      "computedStyles": {
+        "cursor": "text",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": false,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "text"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#notes",
+      "tagName": "input",
+      "id": "notes",
+      "className": "notes-input",
+      "bounds": {
+        "x": 318,
+        "y": 1044,
+        "width": 1545,
+        "height": 28
+      },
+      "computedStyles": {
+        "cursor": "text",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(255, 255, 255, 0.03)"
+      },
+      "interactive": {
+        "hasOnClick": false,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "text"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(2)",
+      "tagName": "div",
+      "className": "nav-item active",
+      "text": "10 settings\n        \n        today",
+      "bounds": {
+        "x": 12,
+        "y": 140,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(129, 140, 248, 0.08)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(3)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "09 knowledge graph\n        \n        today",
+      "bounds": {
+        "x": 12,
+        "y": 172,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(4)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "06 ai trends\n        \n        1d ago",
+      "bounds": {
+        "x": 12,
+        "y": 204,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(5)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "05 news feed\n        \n        1d ago",
+      "bounds": {
+        "x": 12,
+        "y": 236,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(6)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "04 search page\n        \n        1d ago",
+      "bounds": {
+        "x": 12,
+        "y": 268,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(7)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "v composite v2\n        \n        1d ago",
+      "bounds": {
+        "x": 12,
+        "y": 300,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(8)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "v composite\n        \n        1d ago",
+      "bounds": {
+        "x": 12,
+        "y": 332,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(9)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "08 graph related trends\n        \n        1d ago",
+      "bounds": {
+        "x": 12,
+        "y": 364,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(10)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "07 trend detail modal\n        \n        1d ago",
+      "bounds": {
+        "x": 12,
+        "y": 396,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(11)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "v creative c\n        \n        2d ago",
+      "bounds": {
+        "x": 12,
+        "y": 428,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(12)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "v creative b\n        \n        2d ago",
+      "bounds": {
+        "x": 12,
+        "y": 460,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(13)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "v creative a\n        \n        2d ago",
+      "bounds": {
+        "x": 12,
+        "y": 492,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(1) > div.nav-item:nth-of-type(14)",
+      "tagName": "div",
+      "className": "nav-item",
+      "text": "v baseline\n        \n        2d ago",
+      "bounds": {
+        "x": 12,
+        "y": 524,
+        "width": 235,
+        "height": 32
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(240, 240, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    },
+    {
+      "selector": "#sidebar-nav > div.nav-section:nth-of-type(2) > div.nav-label",
+      "tagName": "div",
+      "className": "nav-label",
+      "text": "ARCHIVE (6) ▾",
+      "bounds": {
+        "x": 12,
+        "y": 585,
+        "width": 235,
+        "height": 14
+      },
+      "computedStyles": {
+        "cursor": "pointer",
+        "color": "rgb(90, 90, 114)",
+        "backgroundColor": "rgba(0, 0, 0, 0)"
+      },
+      "interactive": {
+        "hasOnClick": true,
+        "hasHref": false,
+        "isDisabled": false,
+        "tabIndex": 0,
+        "cursor": "pointer"
+      },
+      "a11y": {
+        "role": null,
+        "ariaLabel": null,
+        "ariaDescribedBy": null
+      },
+      "sourceHint": {
+        "dataTestId": null
+      }
+    }
+  ],
+  "audit": {
+    "totalElements": 28,
+    "interactiveCount": 28,
+    "withHandlers": 18,
+    "withoutHandlers": 10,
+    "issues": [
+      {
+        "type": "NO_HANDLER",
+        "severity": "error",
+        "message": "Button \"→\" has no click handler"
+      },
+      {
+        "type": "NO_HANDLER",
+        "severity": "error",
+        "message": "Button \"Select\" has no click handler"
+      },
+      {
+        "type": "NO_HANDLER",
+        "severity": "error",
+        "message": "Button \"Archive\" has no click handler"
+      },
+      {
+        "type": "NO_HANDLER",
+        "severity": "error",
+        "message": "Button \"Refresh\" has no click handler"
+      },
+      {
+        "type": "NO_HANDLER",
+        "severity": "error",
+        "message": "Button \"+\" has no click handler"
+      },
+      {
+        "type": "TOUCH_TARGET_SMALL",
+        "severity": "warning",
+        "message": "\"+\" touch target is 20x20px (min: 24px)"
+      },
+      {
+        "type": "NO_HANDLER",
+        "severity": "error",
+        "message": "Button \"Y\" has no click handler"
+      },
+      {
+        "type": "NO_HANDLER",
+        "severity": "error",
+        "message": "Button \"N\" has no click handler"
+      },
+      {
+        "type": "TOUCH_TARGET_SMALL",
+        "severity": "warning",
+        "message": "\"#cp-content > div.cp-item:nth-of-type(2) > input.cp-item-note\" touch target is 247x21px (min: 24px)"
+      },
+      {
+        "type": "TOUCH_TARGET_SMALL",
+        "severity": "warning",
+        "message": "\"ARCHIVE (6) ▾\" touch target is 235x14px (min: 24px)"
+      }
+    ]
+  }
+}

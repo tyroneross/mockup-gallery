@@ -1,12 +1,12 @@
 # File Trail
-> 10 files, ~1106 lines changed total
+> 10 files, ~1207 lines changed total
 
+- `gallery/gallery.html` (edit ~415L) — +fn showRouteModal, +fn closeRouteModal, +fn selectRoute
 - `docs/plans/2026-03-26-lifecycle-states.md` (write ~397L) — +fn getProjectLastChange, +fn categorize, +fn archiveCurrent, +fn markImplemented
-- `gallery/gallery.html` (edit ~340L) — +fn showRouteModal, +fn closeRouteModal, +fn selectRoute
 - `DESIGN.md` (write ~101L)
 - `DESIGN-SELECTED.md` (write ~76L)
+- `server/gallery-server.mjs` (edit ~75L)
 - `hooks/check-pending.mjs` (write ~65L) — +import fs, +import path, +fn readJson
-- `server/gallery-server.mjs` (edit ~49L)
 - `.claude/commands/mockup-selections.md` (write ~36L)
 - `.claude/commands/mockup-status.md` (write ~35L)
 - `.claude-plugin/plugin.json` (write ~7L)

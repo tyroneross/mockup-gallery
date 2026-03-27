@@ -1,0 +1,8 @@
+{
+  "wsEndpoint": "ws://localhost:64342/5365cd73681bcbece99d1b5fd26397d6",
+  "cdpUrl": "http://127.0.0.1:9676",
+  "pid": 97334,
+  "startedAt": "2026-03-27T08:42:09.923Z",
+  "headless": true,
+  "isolatedProfile": ".ibr/browser-profile"
+}

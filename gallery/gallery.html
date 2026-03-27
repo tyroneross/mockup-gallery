@@ -642,9 +642,10 @@ function closeRouteModal() {
 
 async function selectRoute(route) {
   if (!route.startsWith('/')) route = '/' + route;
+  const cb = window._routeModalCallback;
   closeRouteModal();
-  if (window._routeModalCallback) {
-    await window._routeModalCallback(route);
+  if (cb) {
+    await cb(route);
   }
 }
 
