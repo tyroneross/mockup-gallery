@@ -49,11 +49,8 @@
     .nav-item.active .ni-name { color: #f0f0f5; }
     .ni-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: rgba(255,255,255,0.08); transition: background 0.15s; }
     .ni-dot.r-yay { background: #34d399; }
-    .ni-dot.r-maybe { background: #818cf8; }
-    .ni-dot.r-ok { background: #fbbf24; }
     .ni-dot.r-nay { background: #fb7185; }
-    .ni-dot.r-mixed { background: linear-gradient(135deg, #34d399, #818cf8, #fbbf24); }
-    .ni-dot.r-impl { background: #34d399; }
+    .ni-dot.r-mixed { background: linear-gradient(135deg, #34d399, #fb7185); }
     .ni-dot.r-archived { background: #fb7185; }
     .ni-name { font-size: 12px; color: #9d9db5; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ni-page { font-size: 9px; color: #5a5a72; flex-shrink: 0; }
@@ -98,10 +95,8 @@
       cursor: pointer; font-size: 11px; font-weight: 500; color: #9d9db5; transition: all 0.15s;
     }
     .rate-btn:hover { color: #f0f0f5; border-color: rgba(255,255,255,0.15); }
-    .rate-btn.on-yay   { color: #34d399; border-color: rgba(52,211,153,0.4);   background: rgba(52,211,153,0.06); }
-    .rate-btn.on-maybe { color: #818cf8; border-color: rgba(129,140,248,0.4);  background: rgba(129,140,248,0.06); }
-    .rate-btn.on-ok    { color: #fbbf24; border-color: rgba(251,191,36,0.35);  background: rgba(251,191,36,0.05); }
-    .rate-btn.on-nay   { color: #fb7185; border-color: rgba(251,113,133,0.35); background: rgba(251,113,133,0.05); }
+    .rate-btn.on-yay { color: #34d399; border-color: rgba(52,211,153,0.4);   background: rgba(52,211,153,0.06); }
+    .rate-btn.on-nay { color: #fb7185; border-color: rgba(251,113,133,0.35); background: rgba(251,113,133,0.05); }
     .rate-btn.sm { padding: 3px 10px; height: 24px; font-size: 10px; }
 
     /* Archive button */
@@ -113,7 +108,7 @@
     }
     .archive-btn:hover { color: #fbbf24; background: rgba(251,191,36,0.06); border-color: rgba(251,191,36,0.3); }
 
-    /* Select button — prominent, primary action */
+    /* Select button -- prominent, primary action */
     .select-btn {
       width: auto; padding: 0 16px; height: 32px; display: flex; align-items: center; justify-content: center;
       background: rgba(129,140,248,0.15); border: 1px solid rgba(129,140,248,0.5);
@@ -121,6 +116,15 @@
       transition: all 0.15s; white-space: nowrap; letter-spacing: 0.02em;
     }
     .select-btn:hover { color: #fff; background: rgba(129,140,248,0.25); border-color: rgba(129,140,248,0.7); box-shadow: 0 0 12px rgba(129,140,248,0.15); }
+
+    /* Refresh button -- small, muted */
+    .refresh-btn {
+      width: auto; padding: 0 8px; height: 24px; display: flex; align-items: center; justify-content: center;
+      background: none; border: 0.5px solid rgba(255,255,255,0.04);
+      border-radius: 4px; cursor: pointer; color: #5a5a72; font-size: 10px; transition: all 0.12s;
+      white-space: nowrap; margin-left: auto;
+    }
+    .refresh-btn:hover { color: #9d9db5; border-color: rgba(255,255,255,0.1); }
 
     /* Route picker modal */
     .route-modal-overlay {
@@ -200,17 +204,6 @@
     .cp-item:hover .cp-sel-btn { opacity: 1; }
     .cp-sel-btn:hover { color: #818cf8; }
     .cp-sel-indicator { width: 6px; height: 6px; border-radius: 50%; background: #818cf8; flex-shrink: 0; opacity: 0.7; }
-
-    /* Implement button */
-    .impl-btn {
-      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-      background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.08);
-      border-radius: 4px; cursor: pointer; color: #5a5a72; font-size: 11px; line-height: 1;
-      transition: all 0.12s; flex-shrink: 0;
-    }
-    .impl-btn:hover { color: #34d399; border-color: rgba(52,211,153,0.4); background: rgba(52,211,153,0.06); }
-    .impl-btn.done { color: #34d399; border-color: rgba(52,211,153,0.4); background: rgba(52,211,153,0.1); cursor: default; }
-    .impl-path { font-size: 9px; color: #5a5a72; font-family: monospace; margin-top: 2px; padding-left: 2px; }
 
     /* Preview + component panel */
     .preview-split { flex: 1; display: flex; overflow: hidden; }
@@ -312,19 +305,9 @@
     </div>
     <div id="sidebar-nav"><div class="loading">Loading mockups...</div></div>
     <div class="save-status" id="save-status">Auto-saves to file</div>
-    <div style="padding: 0 8px; margin-bottom: 8px;">
-      <button id="finalize-btn" style="
-        width: 100%; padding: 6px 0; border-radius: 6px;
-        background: rgba(52,211,153,0.08); border: 0.5px solid rgba(52,211,153,0.25);
-        color: #34d399; font-size: 10px; font-weight: 500; cursor: pointer;
-        transition: all 0.15s;
-      ">Finalize Accepted</button>
-    </div>
     <div class="sidebar-footer">
-      <div class="key-row"><span class="kbd">1</span><span class="key-label">Approve</span></div>
-      <div class="key-row"><span class="kbd">2</span><span class="key-label">Maybe</span></div>
-      <div class="key-row"><span class="kbd">3</span><span class="key-label">Changes</span></div>
-      <div class="key-row"><span class="kbd">4</span><span class="key-label">Reject</span></div>
+      <div class="key-row"><span class="kbd">1</span><span class="key-label">Yay</span></div>
+      <div class="key-row"><span class="kbd">2</span><span class="key-label">Nay</span></div>
       <div class="key-row"><span class="kbd">&larr;&rarr;</span><span class="key-label">Navigate</span></div>
       <div class="key-row"><span class="kbd">N</span><span class="key-label">Overall note</span></div>
     </div>
@@ -340,10 +323,9 @@
       </div>
       <span class="position-ct" id="pos-ct"></span>
       <button class="select-btn" id="select-btn" title="Select this mockup for a page route">Select</button>
-      <button class="archive-btn" id="archive-btn" title="Archive this mockup">Archive</button>
-      <button class="arrow-btn" id="refresh-btn" title="Clear all ratings and comments"
-        style="margin-right:4px; color:#fb7185; font-size:11px; width:auto; padding:0 8px;">Reset</button>
       <div class="rating-group" id="page-rating"></div>
+      <button class="archive-btn" id="archive-btn" title="Archive this mockup">Archive</button>
+      <button class="refresh-btn" id="refresh-btn" title="Clear notes on unrated mockups">Refresh</button>
     </div>
 
     <div class="preview-split">
@@ -373,12 +355,12 @@
 </div>
 
 <script>
-// ── Version + localStorage ─────────────────────────────────────────────────
+// -- Version + localStorage -----------------------------------------------
 const GALLERY_VERSION = 'mg1';
 const LS_KEY = 'mockup_gallery_state';
 const LS_VER = 'mockup_gallery_ver';
 
-// ── State ──────────────────────────────────────────────────────────────────
+// -- State ----------------------------------------------------------------
 let M = []; // array of { file, name, modified, modifiedMs, size, archived? }
 let ACCEPTED = {}; // { "filename.html": true } from server
 
@@ -389,18 +371,18 @@ let selectionsData = {}; // from /selections
 let selectedBuild = { pages: {}, components: {} }; // from /selected
 
 // Categorized lists
-let catActive = [], catImplemented = [], catArchived = [], catRejected = [];
+let catActive = [], catArchived = [], catRejected = [];
 
 // Sidebar section collapse state
-let sectionCollapsed = { implemented: true, rejected: true, archive: true };
+let sectionCollapsed = { rejected: true, archive: true };
 
 // S.comp[file] = { "ComponentName": { rating, note } }
-// S.customComps[file] = ["ComponentName", ...] — user-added components
+// S.customComps[file] = ["ComponentName", ...] -- user-added components
 let S = { cur: 0, rat: {}, notes: {}, comp: {}, customComps: {} };
 
 let showAddForm = false;
 
-// ── Persistence ────────────────────────────────────────────────────────────
+// -- Persistence ----------------------------------------------------------
 function loadLocal() {
   try {
     const d = JSON.parse(localStorage.getItem(LS_KEY));
@@ -448,7 +430,7 @@ function flash(id, text, color) {
   setTimeout(() => { el.textContent = 'Auto-saves to file'; el.style.color = '#5a5a72'; }, 1400);
 }
 
-// ── Relative age helper ────────────────────────────────────────────────────
+// -- Relative age helper --------------------------------------------------
 function relAge(ms) {
   if (!ms) return '';
   const diff = Date.now() - ms;
@@ -463,9 +445,9 @@ function relAge(ms) {
   return Math.floor(days / 365) + 'y ago';
 }
 
-// ── Categorize mockups ─────────────────────────────────────────────────────
+// -- Categorize mockups ---------------------------------------------------
 function categorize(mockups, pInfo, iData, sData) {
-  const active = [], implemented = [], archived = [], rejected = [];
+  const active = [], archived = [], rejected = [];
   const ratingMap = {};
   if (sData.selections) {
     sData.selections.forEach(s => { if (s.rating) ratingMap[s.file] = s.rating; });
@@ -473,11 +455,11 @@ function categorize(mockups, pInfo, iData, sData) {
 
   for (const m of mockups) {
     if (m.archived) { archived.push(m); continue; }
-    if (iData[m.file]) { m.implStatus = iData[m.file]; implemented.push(m); continue; }
 
     const rating = ratingMap[m.file];
     if (rating === 'nay') { rejected.push(m); continue; }
 
+    // Active: unrated + yay-rated items
     m.isRecent = m.modifiedMs >= (pInfo.lastChange || 0);
     active.push(m);
   }
@@ -490,10 +472,10 @@ function categorize(mockups, pInfo, iData, sData) {
     return (b.modifiedMs || 0) - (a.modifiedMs || 0);
   });
 
-  return { active, implemented, archived, rejected };
+  return { active, archived, rejected };
 }
 
-// ── Components ─────────────────────────────────────────────────────────────
+// -- Components -----------------------------------------------------------
 // Auto-detect components from data-component attributes or clean h2/h3 tags
 function tryAutoDetect(file, iframeEl) {
   if (!iframeEl) return;
@@ -511,7 +493,7 @@ function tryAutoDetect(file, iframeEl) {
       return;
     }
 
-    // Priority 2: h2/h3 tags — but only if they look like section labels
+    // Priority 2: h2/h3 tags -- but only if they look like section labels
     // Skip if: too many (>8 = probably article content), too long (>60 chars = probably a headline)
     const tags = doc.querySelectorAll('h2, h3');
     if (tags.length === 0 || tags.length > 8) return;
@@ -527,7 +509,7 @@ function tryAutoDetect(file, iframeEl) {
       saveLocal(); renderComponents();
     }
   } catch {
-    // Cross-origin — silently skip, don't leave garbled state
+    // Cross-origin -- silently skip, don't leave garbled state
   }
 }
 
@@ -554,7 +536,7 @@ function removeComp(file, name) {
   save();
 }
 
-// ── Rating helpers ─────────────────────────────────────────────────────────
+// -- Rating helpers -------------------------------------------------------
 function gr(f)     { return S.rat[f] || null; }
 function gcr(f, c) { return S.comp[f]?.[c]?.rating || null; }
 
@@ -595,27 +577,15 @@ function dotClass(f) {
   return 'r-mixed';
 }
 
-// ── Archive / Implement actions ────────────────────────────────────────────
+// -- Archive action -------------------------------------------------------
 async function archiveCurrent() {
   if (M.length === 0) return;
-  if (!confirm('Archive "' + M[S.cur].name + '"? Moves to mockups/archive/.')) return;
+  if (!confirm('Move "' + M[S.cur].name + '" to archive?')) return;
   await fetch('/archive/' + encodeURIComponent(M[S.cur].file), { method: 'POST' });
   location.reload();
 }
 
-async function markImpl(file, component) {
-  const codePath = prompt('Code file path (optional):');
-  await fetch('/implement', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ file, component, status: 'implemented', codePath: codePath || null })
-  });
-  // Refresh impl data
-  implData = await fetch('/implemented').then(r => r.json()).catch(() => ({}));
-  renderComponents();
-}
-
-// ── Selected Build actions ─────────────────────────────────────────────────
+// -- Selected Build actions -----------------------------------------------
 async function saveSelected() {
   try {
     await fetch('/selected', {
@@ -718,17 +688,32 @@ async function removeSelectedComponent(compName) {
   render();
 }
 
-// ── Implementation progress helpers ────────────────────────────────────────
-function implProgress(file) {
-  const data = implData[file];
-  if (!data || typeof data !== 'object') return null;
-  const comps = Object.keys(data);
-  if (comps.length === 0) return null;
-  const done = comps.filter(c => data[c]?.status === 'implemented').length;
-  return { done, total: comps.length };
+// -- Refresh: clear notes on unrated mockups only -------------------------
+function refreshUnrated() {
+  if (!confirm('Clear notes on unrated mockups? (Yay, Nay, Archive, and Selected items keep their notes.)')) return;
+
+  // Build set of selected source files
+  const selectedSourceFiles = new Set(Object.values(selectedBuild.pages).map(p => p.source));
+  Object.values(selectedBuild.components).forEach(c => { if (c.source) selectedSourceFiles.add(c.source); });
+
+  for (const m of M) {
+    const rating = S.rat[m.file];
+    const isArchived = m.archived;
+    const isSelected = selectedSourceFiles.has(m.file);
+
+    // Skip items that have been sorted: yay, nay, archived, or selected
+    if (rating === 'yay' || rating === 'nay' || isArchived || isSelected) continue;
+
+    // Unrated/unsorted: clear notes and component notes
+    delete S.notes[m.file];
+    delete S.comp[m.file];
+  }
+
+  save();
+  render();
 }
 
-// ── Navigation ─────────────────────────────────────────────────────────────
+// -- Navigation -----------------------------------------------------------
 function go(i) {
   if (i < 0 || i >= M.length) return;
   saveCurrentNote();
@@ -748,7 +733,7 @@ function saveCurrentNote() {
   }
 }
 
-// ── Render ─────────────────────────────────────────────────────────────────
+// -- Render ---------------------------------------------------------------
 function render() {
   if (M.length === 0) {
     document.getElementById('sidebar-nav').innerHTML = '<div style="font-size:11px;color:#5a5a72;padding:0 8px;">No mockups found.</div>';
@@ -767,7 +752,6 @@ function render() {
   // Re-categorize for sidebar
   const cats = categorize(M, projectInfo, implData, selectionsData);
   catActive = cats.active;
-  catImplemented = cats.implemented;
   catArchived = cats.archived;
   catRejected = cats.rejected;
 
@@ -824,7 +808,7 @@ function render() {
     nh += `</div>`;
   }
 
-  // ACTIVE section (always expanded)
+  // ACTIVE section (always expanded) -- includes unrated + yay-rated items
   if (catActive.length > 0) {
     nh += `<div class="nav-section"><div class="nav-label">ACTIVE (${catActive.length})</div>`;
     catActive.forEach(x => {
@@ -841,27 +825,6 @@ function render() {
     nh += '</div>';
   }
 
-  // IMPLEMENTED section (collapsed by default, green accent)
-  if (catImplemented.length > 0) {
-    nh += `<div class="nav-section" style="margin-top:12px;padding-top:12px;border-top:0.5px solid rgba(255,255,255,0.04);">
-      <div class="nav-label" style="cursor:pointer;color:#34d399;" onclick="sectionCollapsed.implemented=!sectionCollapsed.implemented;render();">
-        IMPLEMENTED (${catImplemented.length}) ${sectionCollapsed.implemented ? '&#9662;' : '&#9652;'}
-      </div>`;
-    if (!sectionCollapsed.implemented) {
-      catImplemented.forEach(x => {
-        const idx = fileIdx[x.file];
-        const prog = implProgress(x.file);
-        const progText = prog ? `[${prog.done}/${prog.total}]` : '';
-        nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
-          <span class="ni-dot r-impl"></span>
-          <span class="ni-name">${esc(x.name)}</span>
-          ${progText ? `<span class="ni-progress">${progText}</span>` : ''}
-        </div>`;
-      });
-    }
-    nh += '</div>';
-  }
-
   // REJECTED section (collapsed by default, red accent)
   if (catRejected.length > 0) {
     nh += `<div class="nav-section" style="margin-top:12px;padding-top:12px;border-top:0.5px solid rgba(255,255,255,0.04);">
@@ -874,7 +837,7 @@ function render() {
         nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})" style="opacity:0.4;">
           <span class="ni-dot r-nay"></span>
           <span class="ni-name">${esc(x.name)}</span>
-          <span class="ni-page">${esc(relAge(x))}</span>
+          <span class="ni-age">${relAge(x.modifiedMs)}</span>
         </div>`;
       });
     }
@@ -910,10 +873,10 @@ function render() {
   document.getElementById('prev-btn').disabled = S.cur === 0;
   document.getElementById('next-btn').disabled = S.cur === M.length - 1;
 
-  // Page-level rating
+  // Page-level rating: Yay / Nay only
   const pg = document.getElementById('page-rating');
-  pg.innerHTML = ['yay', 'maybe', 'ok', 'nay'].map(v =>
-    `<button class="rate-btn${r === v ? ' on-' + v : ''}" onclick="rate('${esc(m.file)}','${v}')">${{ yay: 'Approve', maybe: 'Maybe', ok: 'Changes', nay: 'Reject' }[v]}</button>`
+  pg.innerHTML = ['yay', 'nay'].map(v =>
+    `<button class="rate-btn${r === v ? ' on-' + v : ''}" onclick="rate('${esc(m.file)}','${v}')">${{ yay: 'Yay', nay: 'Nay' }[v]}</button>`
   ).join('');
 
   // Preview iframe
@@ -940,12 +903,12 @@ function renderComponents() {
   const pr = gr(m.file);
   let html = '';
 
-  // Rate all section
+  // Rate all section: Y / N only
   html += `<div class="cp-all">
     <div class="cp-all-label">Rate Entire Mockup</div>
     <div class="rating-group">
-      ${['yay', 'maybe', 'ok', 'nay'].map(v =>
-        `<button class="rate-btn sm${pr === v ? ' on-' + v : ''}" onclick="rate('${esc(m.file)}','${v}')">${{ yay: 'Y', maybe: '?', ok: 'C', nay: 'N' }[v]}</button>`
+      ${['yay', 'nay'].map(v =>
+        `<button class="rate-btn sm${pr === v ? ' on-' + v : ''}" onclick="rate('${esc(m.file)}','${v}')">${{ yay: 'Y', nay: 'N' }[v]}</button>`
       ).join('')}
     </div>
   </div>`;
@@ -958,17 +921,11 @@ function renderComponents() {
     const cr = gcr(m.file, c);
     const cn = S.comp[m.file]?.[c]?.note || '';
     const ec = esc(c), ef = esc(m.file);
-    const isImpl = implData[m.file]?.[c]?.status === 'implemented';
-    const implCodePath = implData[m.file]?.[c]?.codePath || '';
     const compIdx = i;
     const isSelected = !!selectedBuild.components[c];
     html += `<div class="cp-item" data-file="${ef}" data-comp-idx="${compIdx}">
       <div class="cp-item-header">
         <div class="cp-item-name">${ec}</div>
-        ${isImpl
-          ? `<span class="impl-btn done" title="Implemented in code">Built</span>`
-          : ''
-        }
         ${isSelected
           ? `<span class="cp-sel-indicator" title="In Selected Build (${esc(selectedBuild.components[c].page || '')})"></span>`
           : `<span class="cp-sel-btn" data-action="sel-comp" data-idx="${compIdx}" title="Add to Selected Build">&#x2B;</span>`
@@ -976,13 +933,12 @@ function renderComponents() {
         <span class="cp-item-del" data-action="del" data-idx="${compIdx}" title="Remove">&#x2715;</span>
       </div>
       <div class="rating-group">
-        ${['yay', 'maybe', 'ok', 'nay'].map(v =>
-          `<button class="rate-btn sm${cr === v ? ' on-' + v : ''}" data-action="rate-comp" data-idx="${compIdx}" data-rating="${v}">${{ yay: 'Y', maybe: '?', ok: 'C', nay: 'N' }[v]}</button>`
+        ${['yay', 'nay'].map(v =>
+          `<button class="rate-btn sm${cr === v ? ' on-' + v : ''}" data-action="rate-comp" data-idx="${compIdx}" data-rating="${v}">${{ yay: 'Y', nay: 'N' }[v]}</button>`
         ).join('')}
       </div>
       <input type="text" class="cp-item-note" placeholder="Note..." value="${esc(cn)}"
         data-action="note-comp" data-idx="${compIdx}">
-      ${implCodePath ? `<div class="impl-path">${esc(implCodePath)}</div>` : ''}
     </div>`;
   });
 
@@ -1006,7 +962,7 @@ function removeCompAndRender(file, name) {
   renderComponents();
 }
 
-// Event delegation for component panel — avoids inline onclick with special chars
+// Event delegation for component panel -- avoids inline onclick with special chars
 document.getElementById('cp-content').addEventListener('click', function(e) {
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
@@ -1020,9 +976,6 @@ document.getElementById('cp-content').addEventListener('click', function(e) {
     case 'rate-comp':
       rateComp(m.file, compName, btn.dataset.rating);
       renderComponents();
-      break;
-    case 'impl':
-      markImpl(m.file, compName);
       break;
     case 'del':
       removeCompAndRender(m.file, compName);
@@ -1063,9 +1016,9 @@ function esc(s) {
     .replace(/'/g, '&#39;').replace(/"/g, '&quot;');
 }
 
-// ── Init ───────────────────────────────────────────────────────────────────
+// -- Init -----------------------------------------------------------------
 async function init() {
-  // Version check — clear on new version
+  // Version check -- clear on new version
   if (localStorage.getItem(LS_VER) !== GALLERY_VERSION) {
     localStorage.removeItem(LS_KEY);
     localStorage.setItem(LS_VER, GALLERY_VERSION);
@@ -1110,7 +1063,7 @@ async function init() {
   render();
 }
 
-// ── Events ─────────────────────────────────────────────────────────────────
+// -- Events ---------------------------------------------------------------
 document.getElementById('prev-btn').addEventListener('click', () => go(S.cur - 1));
 document.getElementById('next-btn').addEventListener('click', () => go(S.cur + 1));
 
@@ -1129,63 +1082,7 @@ document.getElementById('cp-add-btn').addEventListener('click', () => {
 
 document.getElementById('select-btn').addEventListener('click', selectCurrentPage);
 document.getElementById('archive-btn').addEventListener('click', archiveCurrent);
-
-document.getElementById('refresh-btn').addEventListener('click', function () {
-  if (!confirm('Clear all ratings and comments? This cannot be undone.')) return;
-  localStorage.removeItem(LS_KEY);
-  const ver = 'mg' + Date.now();
-  localStorage.setItem(LS_VER, ver);
-  S = { cur: 0, rat: {}, notes: {}, comp: {}, customComps: {} };
-  fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
-  showAddForm = false;
-  render();
-});
-
-// Finalize Accepted — auto-generate accepted-designs.json from YAY-rated mockups
-document.getElementById('finalize-btn').addEventListener('click', async function () {
-  const approved = [], rejected = [], approvedPatterns = [], rejectedPatterns = [];
-
-  for (const m of M) {
-    const r = S.rat[m.file];
-    const comps = allComps(m.file);
-    const compDetails = {};
-    comps.forEach(c => {
-      const cr = S.comp[m.file]?.[c]?.rating;
-      const cn = S.comp[m.file]?.[c]?.note;
-      compDetails[c] = { rating: cr || 'unrated', note: cn || null };
-    });
-
-    if (r === 'yay') {
-      approved.push({ page: m.name, mockup: m.file, status: 'accepted', components: compDetails, notes: S.notes[m.file] || null });
-      comps.forEach(c => { if (compDetails[c].rating === 'yay' || !compDetails[c].rating || compDetails[c].rating === 'unrated') approvedPatterns.push(c); });
-    } else if (r === 'nay') {
-      rejected.push({ page: m.name, mockup: m.file, status: 'rejected', notes: S.notes[m.file] || null });
-      comps.forEach(c => { if (compDetails[c].rating === 'nay') rejectedPatterns.push(c); });
-    }
-  }
-
-  const acceptedDesigns = {
-    updated: new Date().toISOString().split('T')[0],
-    accepted: approved,
-    rejected: rejected,
-    design_patterns: {
-      approved: [...new Set(approvedPatterns)],
-      rejected: [...new Set(rejectedPatterns)]
-    }
-  };
-
-  try {
-    // Save to server as accepted-designs.json
-    await fetch('/save-accepted', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(acceptedDesigns, null, 2) });
-    flash('save-status', 'Accepted designs finalized!', '#34d399');
-  } catch {
-    // Fallback: save via the regular save endpoint won't work for a different file
-    // Download as file instead
-    const blob = new Blob([JSON.stringify(acceptedDesigns, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'accepted-designs.json'; a.click();
-    flash('save-status', 'Downloaded accepted-designs.json', '#34d399');
-  }
-});
+document.getElementById('refresh-btn').addEventListener('click', refreshUnrated);
 
 document.addEventListener('keydown', function (e) {
   if (e.target.tagName === 'INPUT') return;
@@ -1195,9 +1092,7 @@ document.addEventListener('keydown', function (e) {
     case 'ArrowLeft':  go(S.cur - 1); break;
     case 'ArrowRight': go(S.cur + 1); break;
     case '1': rate(f, 'yay');   break;
-    case '2': rate(f, 'maybe'); break;
-    case '3': rate(f, 'ok');    break;
-    case '4': rate(f, 'nay');   break;
+    case '2': rate(f, 'nay');   break;
     case 'n': case 'N': e.preventDefault(); document.getElementById('notes').focus(); break;
   }
 });
