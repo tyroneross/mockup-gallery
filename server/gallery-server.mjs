@@ -134,8 +134,9 @@ function handler(req, res) {
   // GET /mockups → file list (main + archive)
   if (req.method === 'GET' && pathname === '/mockups') {
     try {
+      const EXCLUDE = new Set(['gallery-v2.html', 'atomize-gallery.html', 'gallery.html']);
       const mainFiles = fs.readdirSync(MOCKUP_DIR)
-        .filter(f => f.endsWith('.html'))
+        .filter(f => f.endsWith('.html') && !EXCLUDE.has(f))
         .map(f => {
           const stat = fs.statSync(path.join(MOCKUP_DIR, f));
           return {
