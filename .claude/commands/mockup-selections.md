@@ -1,22 +1,35 @@
 ---
 name: mockup-selections
-description: Read all mockup selections and design decisions — use before implementing UI changes
+description: Read all mockup selections, design decisions, and implementation status — use before implementing UI changes
 ---
 
 Follow these steps:
 
-1. Read both of these files from the project root:
-   - `.mockup-gallery/selections.json`
-   - `.mockup-gallery/accepted-designs.json` (if it exists)
+1. Read ALL of these files from the project root (skip any that don't exist):
+   - `.mockup-gallery/selections.json` — live ratings and notes
+   - `.mockup-gallery/accepted-designs.json` — approved design patterns
+   - `.mockup-gallery/implemented.json` — implementation tracking (mockup → code file mapping)
+   - `.mockup-gallery/last-change.json` — when the last gallery change was made
 
 2. Display the full structured output in this order:
 
-   **Accepted designs** — for each approved item, show the filename, rating, and any component-level decisions recorded in the selections data.
+   **Last updated** — show the timestamp from `last-change.json` so you know how fresh the data is.
 
-   **Approved design patterns** — list all entries from `accepted-designs.json` under an approved patterns heading.
+   **Implementation Status** — for each entry in `implemented.json`:
+   - Mockup name + overall status (designed/partial/implemented)
+   - Per-component: name + status + code file path
+   - This tells you what's already been built
 
-   **Rejected patterns** — list all entries marked as rejected, with the reason if one was recorded.
+   **Accepted designs** — for each item rated "yay", show the filename and component-level decisions.
 
-   **Still needs review** — list items that are unrated or marked "changes needed", including any feedback notes the user left.
+   **Approved design patterns** — list from `accepted-designs.json`.
 
-3. This output gives you full context on what the user has approved before you make any UI changes. Do not implement UI changes that conflict with accepted designs or rejected patterns.
+   **Rejected patterns** — list with reasons.
+
+   **Needs review** — items that are unrated or "changes needed", with user feedback notes.
+
+3. This output gives you full context on what the user has approved and what's already built. Do not:
+   - Implement UI that conflicts with accepted designs
+   - Rebuild components already marked as implemented
+   - Use rejected patterns
+   - Ignore user feedback notes on "changes needed" items

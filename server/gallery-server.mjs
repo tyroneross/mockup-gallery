@@ -189,6 +189,11 @@ function handler(req, res) {
     readBody(req).then(body => {
       const dest = path.join(STORAGE_DIR, 'selections.json');
       fs.writeFileSync(dest, body, 'utf8');
+      // Write change marker so Claude Code can detect updates
+      fs.writeFileSync(path.join(STORAGE_DIR, 'last-change.json'), JSON.stringify({
+        timestamp: new Date().toISOString(),
+        source: 'gallery-save'
+      }));
       json(res, { ok: true });
     }).catch(e => json(res, { error: e.message }, 500));
     return;
