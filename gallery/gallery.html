@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockup Gallery</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #060611; color: #f0f0f5;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      font-size: 14px; line-height: 1.5;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 15% 30%, rgba(99,102,241,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(34,211,238,0.03) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 85%, rgba(167,139,250,0.03) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+    .shell { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+      border-right: 0.5px solid rgba(255,255,255,0.06); padding: 20px 12px;
+      background: rgba(6,6,17,0.6); backdrop-filter: blur(16px); display: flex; flex-direction: column;
+    }
+    .sidebar-title { font-size: 15px; font-weight: 700; color: #f0f0f5; letter-spacing: -0.02em; }
+    .sidebar-sub { font-size: 11px; color: #5a5a72; margin-bottom: 20px; }
+    .progress-wrap { margin-bottom: 20px; padding: 0 4px; }
+    .progress-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .progress-text { font-size: 11px; color: #5a5a72; }
+    .progress-count { font-size: 11px; font-weight: 600; color: #9d9db5; }
+    .progress-track { height: 2px; background: rgba(255,255,255,0.06); border-radius: 1px; }
+    .progress-fill { height: 100%; border-radius: 1px; transition: width 0.3s; background: #818cf8; }
+    .nav-section { margin-bottom: 16px; }
+    .nav-label {
+      font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #5a5a72; padding: 0 8px; margin-bottom: 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px; padding: 7px 8px;
+      border-radius: 6px; cursor: pointer; transition: all 0.12s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.03); }
+    .nav-item.active { background: rgba(129,140,248,0.08); }
+    .nav-item.active .ni-name { color: #f0f0f5; }
+    .ni-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: rgba(255,255,255,0.08); transition: background 0.15s; }
+    .ni-dot.r-yay { background: #34d399; }
+    .ni-dot.r-maybe { background: #818cf8; }
+    .ni-dot.r-ok { background: #fbbf24; }
+    .ni-dot.r-nay { background: #fb7185; }
+    .ni-dot.r-mixed { background: linear-gradient(135deg, #34d399, #818cf8, #fbbf24); }
+    .ni-name { font-size: 12px; color: #9d9db5; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ni-page { font-size: 9px; color: #5a5a72; flex-shrink: 0; }
+    .save-status { padding: 0 8px; margin-bottom: 16px; font-size: 10px; color: #5a5a72; text-align: center; }
+    .sidebar-footer { margin-top: auto; padding: 12px 8px 0; border-top: 0.5px solid rgba(255,255,255,0.04); }
+    .key-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 20px; height: 18px; padding: 0 4px;
+      background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.08);
+      border-radius: 3px; font-size: 10px; color: #5a5a72; font-family: monospace;
+    }
+    .key-label { font-size: 10px; color: #5a5a72; }
+
+    /* Main */
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+    /* Review bar */
+    .review-bar {
+      position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px; background: rgba(6,6,17,0.92); backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    }
+    .arrow-btn {
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.06);
+      border-radius: 6px; cursor: pointer; color: #5a5a72; font-size: 13px; transition: all 0.12s;
+    }
+    .arrow-btn:hover { color: #f0f0f5; background: rgba(255,255,255,0.06); }
+    .arrow-btn:disabled { opacity: 0.25; cursor: default; pointer-events: none; }
+    .review-info { flex: 1; min-width: 0; }
+    .review-name { font-size: 13px; font-weight: 600; color: #f0f0f5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .review-meta { font-size: 11px; color: #5a5a72; }
+    .position-ct { font-size: 11px; color: #5a5a72; white-space: nowrap; margin-right: 4px; }
+
+    .rating-group { display: flex; gap: 4px; flex-shrink: 0; }
+    .rate-btn {
+      padding: 5px 14px; height: 30px; background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(255,255,255,0.08); border-radius: 6px;
+      cursor: pointer; font-size: 11px; font-weight: 500; color: #9d9db5; transition: all 0.15s;
+    }
+    .rate-btn:hover { color: #f0f0f5; border-color: rgba(255,255,255,0.15); }
+    .rate-btn.on-yay   { color: #34d399; border-color: rgba(52,211,153,0.4);   background: rgba(52,211,153,0.06); }
+    .rate-btn.on-maybe { color: #818cf8; border-color: rgba(129,140,248,0.4);  background: rgba(129,140,248,0.06); }
+    .rate-btn.on-ok    { color: #fbbf24; border-color: rgba(251,191,36,0.35);  background: rgba(251,191,36,0.05); }
+    .rate-btn.on-nay   { color: #fb7185; border-color: rgba(251,113,133,0.35); background: rgba(251,113,133,0.05); }
+    .rate-btn.sm { padding: 3px 10px; height: 24px; font-size: 10px; }
+
+    /* Preview + component panel */
+    .preview-split { flex: 1; display: flex; overflow: hidden; }
+    .preview-container { flex: 1; position: relative; background: #080816; }
+    .preview-container iframe { width: 100%; height: 100%; border: none; display: block; }
+    .preview-empty {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; color: #5a5a72; flex-direction: column; gap: 8px;
+    }
+    .preview-empty-label { font-size: 13px; }
+    .preview-empty-sub { font-size: 11px; opacity: 0.6; }
+
+    /* Component ratings panel */
+    .component-panel {
+      width: 280px; flex-shrink: 0; overflow-y: auto;
+      border-left: 0.5px solid rgba(255,255,255,0.06);
+      padding: 16px; background: rgba(6,6,17,0.6);
+    }
+    .cp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .cp-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #5a5a72; }
+    .cp-add-btn {
+      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.08);
+      border-radius: 4px; cursor: pointer; color: #5a5a72; font-size: 14px; line-height: 1;
+      transition: all 0.12s;
+    }
+    .cp-add-btn:hover { color: #818cf8; border-color: rgba(129,140,248,0.4); background: rgba(129,140,248,0.06); }
+    .cp-all { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 0.5px solid rgba(255,255,255,0.06); }
+    .cp-all-label { font-size: 12px; color: #9d9db5; margin-bottom: 6px; font-weight: 500; }
+    .cp-item { margin-bottom: 12px; }
+    .cp-item-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .cp-item-name { font-size: 12px; color: #f0f0f5; flex: 1; font-weight: 500; }
+    .cp-item-del {
+      width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;
+      color: #5a5a72; font-size: 12px; cursor: pointer; opacity: 0; transition: opacity 0.15s;
+      border-radius: 3px; flex-shrink: 0;
+    }
+    .cp-item:hover .cp-item-del { opacity: 1; }
+    .cp-item-del:hover { color: #fb7185; }
+    .cp-item-note {
+      width: 100%; padding: 4px 8px; background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(255,255,255,0.06); border-radius: 4px;
+      color: #f0f0f5; font-size: 10px; outline: none; margin-top: 4px; transition: border-color 0.15s;
+    }
+    .cp-item-note::placeholder { color: #5a5a72; }
+    .cp-item-note:focus { border-color: rgba(129,140,248,0.4); }
+    .cp-add-form { margin-top: 8px; display: flex; gap: 6px; }
+    .cp-add-input {
+      flex: 1; padding: 4px 8px; background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(129,140,248,0.4); border-radius: 4px;
+      color: #f0f0f5; font-size: 11px; outline: none;
+    }
+    .cp-add-input::placeholder { color: #5a5a72; }
+    .cp-add-confirm {
+      padding: 4px 10px; background: rgba(129,140,248,0.12); border: 0.5px solid rgba(129,140,248,0.4);
+      border-radius: 4px; color: #818cf8; font-size: 11px; cursor: pointer; transition: all 0.12s;
+    }
+    .cp-add-confirm:hover { background: rgba(129,140,248,0.2); }
+
+    /* Notes bar */
+    .notes-bar {
+      display: flex; align-items: center; gap: 8px; padding: 8px 20px;
+      border-top: 0.5px solid rgba(255,255,255,0.06); background: rgba(6,6,17,0.7);
+    }
+    .notes-label { font-size: 10px; color: #5a5a72; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.05em; }
+    .notes-input {
+      flex: 1; padding: 6px 10px; background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(255,255,255,0.06); border-radius: 6px;
+      color: #f0f0f5; font-size: 12px; outline: none; transition: border-color 0.15s;
+    }
+    .notes-input::placeholder { color: #5a5a72; }
+    .notes-input:focus { border-color: rgba(129,140,248,0.4); }
+    .notes-saved { font-size: 10px; color: #34d399; opacity: 0; transition: opacity 0.2s; flex-shrink: 0; }
+    .notes-saved.show { opacity: 1; }
+
+    /* Loading state */
+    .loading { display: flex; align-items: center; justify-content: center; height: 100%; color: #5a5a72; font-size: 12px; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .component-panel { width: 220px; }
+      .review-bar { padding: 8px 12px; }
+      .rate-btn { padding: 5px 10px; font-size: 10px; }
+    }
+    @media (max-width: 600px) { .component-panel { display: none; } }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="sidebar">
+    <div class="sidebar-title">Mockup Gallery</div>
+    <div class="sidebar-sub" id="sidebar-sub">Loading...</div>
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span class="progress-text">Reviewed</span>
+        <span class="progress-count" id="prog-ct">0 / 0</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+    <div id="sidebar-nav"><div class="loading">Loading mockups...</div></div>
+    <div class="save-status" id="save-status">Auto-saves to file</div>
+    <div class="sidebar-footer">
+      <div class="key-row"><span class="kbd">1</span><span class="key-label">Approve</span></div>
+      <div class="key-row"><span class="kbd">2</span><span class="key-label">Maybe</span></div>
+      <div class="key-row"><span class="kbd">3</span><span class="key-label">Changes</span></div>
+      <div class="key-row"><span class="kbd">4</span><span class="key-label">Reject</span></div>
+      <div class="key-row"><span class="kbd">&larr;&rarr;</span><span class="key-label">Navigate</span></div>
+      <div class="key-row"><span class="kbd">N</span><span class="key-label">Overall note</span></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="review-bar">
+      <button class="arrow-btn" id="prev-btn">&larr;</button>
+      <button class="arrow-btn" id="next-btn">&rarr;</button>
+      <div class="review-info">
+        <div class="review-name" id="r-name">-</div>
+        <div class="review-meta" id="r-meta">-</div>
+      </div>
+      <span class="position-ct" id="pos-ct"></span>
+      <button class="arrow-btn" id="refresh-btn" title="Clear all ratings and comments"
+        style="margin-right:4px; color:#fb7185; font-size:11px; width:auto; padding:0 8px;">Reset</button>
+      <div class="rating-group" id="page-rating"></div>
+    </div>
+
+    <div class="preview-split">
+      <div class="preview-container" id="preview">
+        <div class="preview-empty">
+          <div class="preview-empty-label">No mockup selected</div>
+          <div class="preview-empty-sub">Loading mockup list...</div>
+        </div>
+      </div>
+      <div class="component-panel" id="cp-panel">
+        <div class="cp-header">
+          <div class="cp-title">Component Ratings</div>
+          <button class="cp-add-btn" id="cp-add-btn" title="Add component">+</button>
+        </div>
+        <div id="cp-content">
+          <div style="font-size:11px;color:#5a5a72;">Select a mockup to rate its components</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes-bar">
+      <span class="notes-label">Note</span>
+      <input type="text" class="notes-input" id="notes" placeholder="Overall feedback on this mockup...">
+      <span class="notes-saved" id="n-saved">Saved</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Version + localStorage ─────────────────────────────────────────────────
+const GALLERY_VERSION = 'mg1';
+const LS_KEY = 'mockup_gallery_state';
+const LS_VER = 'mockup_gallery_ver';
+
+// ── State ──────────────────────────────────────────────────────────────────
+let M = []; // array of { file, name, modified, size }
+let ACCEPTED = {}; // { "filename.html": true } from server
+
+// S.comp[file] = { "ComponentName": { rating, note } }
+// S.customComps[file] = ["ComponentName", ...] — user-added components
+let S = { cur: 0, rat: {}, notes: {}, comp: {}, customComps: {} };
+
+let showAddForm = false;
+
+// ── Persistence ────────────────────────────────────────────────────────────
+function loadLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem(LS_KEY));
+    if (d) {
+      S.rat = d.rat || {};
+      S.notes = d.notes || {};
+      S.comp = d.comp || {};
+      S.customComps = d.customComps || {};
+    }
+  } catch {}
+}
+
+function saveLocal() {
+  localStorage.setItem(LS_KEY, JSON.stringify({ rat: S.rat, notes: S.notes, comp: S.comp, customComps: S.customComps }));
+}
+
+async function saveToServer() {
+  const payload = {
+    exported: new Date().toISOString(),
+    total: M.length,
+    rated: Object.keys(S.rat).length,
+    selections: M.map(m => ({
+      file: m.file,
+      name: m.name,
+      rating: S.rat[m.file] || 'unrated',
+      note: S.notes[m.file] || null,
+      components: allComps(m.file).map(c => ({
+        name: c,
+        rating: S.comp[m.file]?.[c]?.rating || 'unrated',
+        note: S.comp[m.file]?.[c]?.note || null,
+      }))
+    }))
+  };
+  try {
+    await fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    flash('save-status', 'Saved', '#34d399');
+  } catch {}
+}
+
+function save() { saveLocal(); saveToServer(); }
+
+function flash(id, text, color) {
+  const el = document.getElementById(id);
+  el.textContent = text; el.style.color = color;
+  setTimeout(() => { el.textContent = 'Auto-saves to file'; el.style.color = '#5a5a72'; }, 1400);
+}
+
+// ── Components ─────────────────────────────────────────────────────────────
+// Auto-detect components from h2/h3 tags inside iframe — best-effort
+function tryAutoDetect(file, iframeEl) {
+  if (!iframeEl) return;
+  try {
+    const doc = iframeEl.contentDocument || iframeEl.contentWindow?.document;
+    if (!doc) return;
+    const tags = doc.querySelectorAll('h2, h3');
+    if (tags.length === 0) return;
+    if (!S.customComps[file]) S.customComps[file] = [];
+    const existing = new Set(S.customComps[file]);
+    let added = false;
+    tags.forEach(t => {
+      const txt = t.textContent?.trim();
+      if (txt && !existing.has(txt)) {
+        S.customComps[file].push(txt);
+        existing.add(txt);
+        added = true;
+      }
+    });
+    if (added) { saveLocal(); renderComponents(); }
+  } catch {}
+  // cross-origin iframes will throw — that's fine, we just skip
+}
+
+function allComps(file) {
+  return S.customComps[file] || [];
+}
+
+function addComp(file, name) {
+  if (!name) return;
+  if (!S.customComps[file]) S.customComps[file] = [];
+  if (!S.customComps[file].includes(name)) {
+    S.customComps[file].push(name);
+    save();
+  }
+}
+
+function removeComp(file, name) {
+  if (!S.customComps[file]) return;
+  S.customComps[file] = S.customComps[file].filter(c => c !== name);
+  if (S.comp[file]) {
+    delete S.comp[file][name];
+    if (Object.keys(S.comp[file]).length === 0) delete S.comp[file];
+  }
+  save();
+}
+
+// ── Rating helpers ─────────────────────────────────────────────────────────
+function gr(f)     { return S.rat[f] || null; }
+function gcr(f, c) { return S.comp[f]?.[c]?.rating || null; }
+
+function rate(f, r) {
+  S.rat[f] = S.rat[f] === r ? undefined : r;
+  if (!S.rat[f]) delete S.rat[f];
+  save(); render();
+}
+
+function rateComp(f, c, r) {
+  if (!S.comp[f]) S.comp[f] = {};
+  if (!S.comp[f][c]) S.comp[f][c] = {};
+  S.comp[f][c].rating = S.comp[f][c].rating === r ? undefined : r;
+  if (!S.comp[f][c].rating) delete S.comp[f][c].rating;
+  if (!S.comp[f][c].rating && !S.comp[f][c].note) delete S.comp[f][c];
+  if (Object.keys(S.comp[f]).length === 0) delete S.comp[f];
+  save(); renderComponents();
+}
+
+function noteComp(f, c, text) {
+  if (!S.comp[f]) S.comp[f] = {};
+  if (!S.comp[f][c]) S.comp[f][c] = {};
+  if (text) S.comp[f][c].note = text;
+  else delete S.comp[f][c].note;
+  if (!S.comp[f][c].rating && !S.comp[f][c].note) delete S.comp[f][c];
+  if (Object.keys(S.comp[f]).length === 0) delete S.comp[f];
+  save();
+}
+
+function dotClass(f) {
+  const pr = gr(f);
+  if (pr) return 'r-' + pr;
+  const comp = S.comp[f];
+  if (!comp) return '';
+  const ratings = new Set(Object.values(comp).map(c => c.rating).filter(Boolean));
+  if (ratings.size === 0) return '';
+  if (ratings.size === 1) return 'r-' + [...ratings][0];
+  return 'r-mixed';
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+function go(i) {
+  if (i < 0 || i >= M.length) return;
+  saveCurrentNote();
+  S.cur = i;
+  showAddForm = false;
+  render();
+}
+
+function saveCurrentNote() {
+  if (M.length === 0) return;
+  const n = document.getElementById('notes');
+  if (n) {
+    const v = n.value.trim();
+    if (v) S.notes[M[S.cur].file] = v;
+    else delete S.notes[M[S.cur].file];
+    save();
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function render() {
+  if (M.length === 0) {
+    document.getElementById('sidebar-nav').innerHTML = '<div style="font-size:11px;color:#5a5a72;padding:0 8px;">No mockups found.</div>';
+    document.getElementById('r-name').textContent = 'No mockups';
+    document.getElementById('r-meta').textContent = 'Add HTML files to your mockup directory';
+    document.getElementById('pos-ct').textContent = '';
+    document.getElementById('preview').innerHTML = `<div class="preview-empty"><div class="preview-empty-label">No mockups found</div><div class="preview-empty-sub">Add .html files to the mockup directory</div></div>`;
+    document.getElementById('cp-content').innerHTML = '';
+    document.getElementById('page-rating').innerHTML = '';
+    return;
+  }
+
+  const m = M[S.cur];
+  const r = gr(m.file);
+
+  // Split mockups into Review, Accepted, and groups within Review
+  const reviewItems = [], acceptedItems = [];
+  M.forEach((x, i) => {
+    if (ACCEPTED[x.file]) acceptedItems.push({ ...x, i });
+    else reviewItems.push({ ...x, i });
+  });
+
+  const reviewCount = reviewItems.length;
+  const ratedReview = reviewItems.filter(x => S.rat[x.file] || S.comp[x.file]).length;
+  document.getElementById('prog-ct').textContent = `${ratedReview} / ${reviewCount}`;
+  document.getElementById('prog-fill').style.width = `${Math.min(100, reviewCount ? (ratedReview / reviewCount) * 100 : 0)}%`;
+  document.getElementById('sidebar-sub').textContent = `${M.length} mockup${M.length !== 1 ? 's' : ''}`;
+
+  let nh = '';
+
+  // Review section
+  if (reviewItems.length > 0) {
+    nh += `<div class="nav-section"><div class="nav-label">Review</div>`;
+    reviewItems.forEach(x => {
+      nh += `<div class="nav-item${x.i === S.cur ? ' active' : ''}" onclick="go(${x.i})">
+        <span class="ni-dot ${dotClass(x.file)}"></span>
+        <span class="ni-name">${esc(x.name)}</span>
+      </div>`;
+    });
+    nh += '</div>';
+  }
+
+  // Accepted section — collapsed by default, green accent
+  if (acceptedItems.length > 0) {
+    nh += `<div class="nav-section" style="margin-top:12px;padding-top:12px;border-top:0.5px solid rgba(255,255,255,0.04);">
+      <div class="nav-label" style="cursor:pointer;color:#34d399;" onclick="toggleSection('accepted-list')">
+        Accepted (${acceptedItems.length}) &#9662;
+      </div>
+      <div id="accepted-list" style="display:none;">`;
+    acceptedItems.forEach(x => {
+      nh += `<div class="nav-item${x.i === S.cur ? ' active' : ''}" onclick="go(${x.i})" style="opacity:0.7;">
+        <span class="ni-dot r-yay"></span>
+        <span class="ni-name">${esc(x.name)}</span>
+      </div>`;
+    });
+    nh += '</div></div>';
+  }
+
+  document.getElementById('sidebar-nav').innerHTML = nh;
+
+  // Review bar
+  document.getElementById('r-name').textContent = m.name;
+  const modDate = m.modified ? new Date(m.modified).toLocaleDateString() : '';
+  const sizeKb = m.size ? `${Math.round(m.size / 1024)}KB` : '';
+  document.getElementById('r-meta').textContent = [m.file, modDate, sizeKb].filter(Boolean).join(' · ');
+  document.getElementById('pos-ct').textContent = `${S.cur + 1} / ${M.length}`;
+  document.getElementById('prev-btn').disabled = S.cur === 0;
+  document.getElementById('next-btn').disabled = S.cur === M.length - 1;
+
+  // Page-level rating
+  const pg = document.getElementById('page-rating');
+  pg.innerHTML = ['yay', 'maybe', 'ok', 'nay'].map(v =>
+    `<button class="rate-btn${r === v ? ' on-' + v : ''}" onclick="rate('${esc(m.file)}','${v}')">${{ yay: 'Approve', maybe: 'Maybe', ok: 'Changes', nay: 'Reject' }[v]}</button>`
+  ).join('');
+
+  // Preview iframe
+  const iframeHtml = `<iframe id="preview-iframe" src="/mockup/${encodeURIComponent(m.file)}?v=${GALLERY_VERSION}" loading="eager"></iframe>`;
+  document.getElementById('preview').innerHTML = iframeHtml;
+  // Try auto-detecting components after iframe loads (best-effort, cross-origin will silently fail)
+  const iframe = document.getElementById('preview-iframe');
+  if (iframe) {
+    iframe.addEventListener('load', () => {
+      if (allComps(m.file).length === 0) tryAutoDetect(m.file, iframe);
+    }, { once: true });
+  }
+
+  document.getElementById('notes').value = S.notes[m.file] || '';
+
+  renderComponents();
+}
+
+function renderComponents() {
+  if (M.length === 0) return;
+  const m = M[S.cur];
+  const comps = allComps(m.file);
+  const panel = document.getElementById('cp-content');
+  const pr = gr(m.file);
+  let html = '';
+
+  // Rate all section
+  html += `<div class="cp-all">
+    <div class="cp-all-label">Rate Entire Mockup</div>
+    <div class="rating-group">
+      ${['yay', 'maybe', 'ok', 'nay'].map(v =>
+        `<button class="rate-btn sm${pr === v ? ' on-' + v : ''}" onclick="rate('${esc(m.file)}','${v}')">${{ yay: 'Y', maybe: '?', ok: 'C', nay: 'N' }[v]}</button>`
+      ).join('')}
+    </div>
+  </div>`;
+
+  if (comps.length === 0) {
+    html += `<div style="font-size:11px;color:#5a5a72;margin-bottom:8px;">No components yet. Use + to add, or they auto-detect from &lt;h2&gt;/&lt;h3&gt; tags.</div>`;
+  }
+
+  comps.forEach(c => {
+    const cr = gcr(m.file, c);
+    const cn = S.comp[m.file]?.[c]?.note || '';
+    const ec = esc(c), ef = esc(m.file);
+    html += `<div class="cp-item">
+      <div class="cp-item-header">
+        <div class="cp-item-name">${ec}</div>
+        <span class="cp-item-del" onclick="removeCompAndRender('${ef}','${ec}')" title="Remove">&#x2715;</span>
+      </div>
+      <div class="rating-group">
+        ${['yay', 'maybe', 'ok', 'nay'].map(v =>
+          `<button class="rate-btn sm${cr === v ? ' on-' + v : ''}" onclick="rateComp('${ef}','${ec}','${v}')">${{ yay: 'Y', maybe: '?', ok: 'C', nay: 'N' }[v]}</button>`
+        ).join('')}
+      </div>
+      <input type="text" class="cp-item-note" placeholder="Note on ${ec}..." value="${esc(cn)}"
+        onblur="noteComp('${ef}','${ec}',this.value.trim())">
+    </div>`;
+  });
+
+  // Add form (shown when + is clicked)
+  if (showAddForm) {
+    html += `<div class="cp-add-form">
+      <input type="text" class="cp-add-input" id="comp-add-input" placeholder="Component name..." autofocus
+        onkeydown="if(event.key==='Enter')confirmAddComp();if(event.key==='Escape'){showAddForm=false;renderComponents();}">
+      <button class="cp-add-confirm" onclick="confirmAddComp()">Add</button>
+    </div>`;
+  }
+
+  panel.innerHTML = html;
+  if (showAddForm) {
+    setTimeout(() => document.getElementById('comp-add-input')?.focus(), 0);
+  }
+}
+
+function removeCompAndRender(file, name) {
+  removeComp(file, name);
+  renderComponents();
+}
+
+function confirmAddComp() {
+  if (M.length === 0) return;
+  const input = document.getElementById('comp-add-input');
+  const name = input?.value.trim();
+  if (name) {
+    addComp(M[S.cur].file, name);
+    showAddForm = false;
+    renderComponents();
+  }
+}
+
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+async function init() {
+  // Version check — clear on new version
+  if (localStorage.getItem(LS_VER) !== GALLERY_VERSION) {
+    localStorage.removeItem(LS_KEY);
+    localStorage.setItem(LS_VER, GALLERY_VERSION);
+    S = { cur: 0, rat: {}, notes: {}, comp: {}, customComps: {} };
+    fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+  } else {
+    loadLocal();
+  }
+
+  // Fetch accepted designs
+  try {
+    const acc = await fetch('/accepted').then(r => r.json());
+    if (acc && typeof acc === 'object') {
+      if (Array.isArray(acc)) acc.forEach(f => { ACCEPTED[f] = true; });
+      else if (acc.accepted) acc.accepted.forEach(f => { ACCEPTED[f] = true; });
+      else Object.keys(acc).forEach(k => { if (acc[k]) ACCEPTED[k] = true; });
+    }
+  } catch {}
+
+  // Fetch mockup list
+  try {
+    const list = await fetch('/mockups').then(r => r.json());
+    if (Array.isArray(list)) M = list;
+  } catch {
+    document.getElementById('sidebar-nav').innerHTML = '<div style="font-size:11px;color:#fb7185;padding:0 8px;">Failed to load mockups. Is the server running?</div>';
+    return;
+  }
+
+  if (S.cur >= M.length) S.cur = 0;
+  render();
+}
+
+// ── Events ─────────────────────────────────────────────────────────────────
+document.getElementById('prev-btn').addEventListener('click', () => go(S.cur - 1));
+document.getElementById('next-btn').addEventListener('click', () => go(S.cur + 1));
+
+document.getElementById('notes').addEventListener('blur', function () {
+  saveCurrentNote();
+  const s = document.getElementById('n-saved');
+  s.classList.add('show');
+  setTimeout(() => s.classList.remove('show'), 1000);
+});
+
+document.getElementById('cp-add-btn').addEventListener('click', () => {
+  if (M.length === 0) return;
+  showAddForm = !showAddForm;
+  renderComponents();
+});
+
+document.getElementById('refresh-btn').addEventListener('click', function () {
+  if (!confirm('Clear all ratings and comments? This cannot be undone.')) return;
+  localStorage.removeItem(LS_KEY);
+  const ver = 'mg' + Date.now();
+  localStorage.setItem(LS_VER, ver);
+  S = { cur: 0, rat: {}, notes: {}, comp: {}, customComps: {} };
+  fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+  showAddForm = false;
+  render();
+});
+
+document.addEventListener('keydown', function (e) {
+  if (e.target.tagName === 'INPUT') return;
+  if (M.length === 0) return;
+  const f = M[S.cur].file;
+  switch (e.key) {
+    case 'ArrowLeft':  go(S.cur - 1); break;
+    case 'ArrowRight': go(S.cur + 1); break;
+    case '1': rate(f, 'yay');   break;
+    case '2': rate(f, 'maybe'); break;
+    case '3': rate(f, 'ok');    break;
+    case '4': rate(f, 'nay');   break;
+    case 'n': case 'N': e.preventDefault(); document.getElementById('notes').focus(); break;
+  }
+});
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "name": "mockup-gallery",
+  "description": "Visual mockup review gallery with component-level ratings, auto-save to file, and Claude Code integration. Launch with /mockup-review.",
+  "author": {
+    "name": "Tyrone Ross"
+  }
+}
