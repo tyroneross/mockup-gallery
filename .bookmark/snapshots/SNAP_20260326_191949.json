@@ -1,0 +1,44 @@
+{
+  "snapshot_id": "SNAP_20260326_191949",
+  "timestamp": 1774577989417,
+  "session_id": "21402429-a30c-4ee4-8598-e83e42bb78eb",
+  "project_path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery",
+  "trigger": "session_end",
+  "compaction_cycle": 0,
+  "files_changed": [
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/{.claude-plugin,.claude/commands,.claude/skills/mockup-review,.claude/hooks,server,gallery}",
+      "operations": [
+        "create"
+      ],
+      "lines_changed": 0
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/.claude-plugin/plugin.json",
+      "operations": [
+        "write"
+      ],
+      "lines_changed": 7
+    }
+  ],
+  "tools_summary": {
+    "Skill": 6,
+    "Agent": 40,
+    "Read": 62,
+    "Write": 19,
+    "ToolSearch": 8,
+    "ExitPlanMode": 7,
+    "Grep": 14,
+    "WebFetch": 3,
+    "Edit": 64,
+    "Bash": 60,
+    "mcp__plugin_playwright_playwright__browser_navigate": 4,
+    "mcp__plugin_playwright_playwright__browser_install": 1,
+    "TaskCreate": 18,
+    "TaskUpdate": 36,
+    "SendMessage": 1,
+    "Glob": 1,
+    "mcp__plugin_playwright_playwright__browser_evaluate": 1,
+    "AskUserQuestion": 1
+  }
+}
