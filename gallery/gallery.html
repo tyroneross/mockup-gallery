@@ -113,14 +113,57 @@
     }
     .archive-btn:hover { color: #fbbf24; background: rgba(251,191,36,0.06); border-color: rgba(251,191,36,0.3); }
 
-    /* Select button */
+    /* Select button — prominent, primary action */
     .select-btn {
-      width: auto; padding: 0 8px; height: 28px; display: flex; align-items: center; justify-content: center;
-      background: rgba(129,140,248,0.06); border: 0.5px solid rgba(129,140,248,0.25);
-      border-radius: 6px; cursor: pointer; color: #818cf8; font-size: 11px; transition: all 0.12s;
-      white-space: nowrap;
+      width: auto; padding: 0 16px; height: 32px; display: flex; align-items: center; justify-content: center;
+      background: rgba(129,140,248,0.15); border: 1px solid rgba(129,140,248,0.5);
+      border-radius: 8px; cursor: pointer; color: #a5b4fc; font-size: 12px; font-weight: 600;
+      transition: all 0.15s; white-space: nowrap; letter-spacing: 0.02em;
     }
-    .select-btn:hover { color: #a5b4fc; background: rgba(129,140,248,0.12); border-color: rgba(129,140,248,0.5); }
+    .select-btn:hover { color: #fff; background: rgba(129,140,248,0.25); border-color: rgba(129,140,248,0.7); box-shadow: 0 0 12px rgba(129,140,248,0.15); }
+
+    /* Route picker modal */
+    .route-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .route-modal {
+      background: #0e0e1a; border: 0.5px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 20px; width: 320px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .route-modal h3 { font-size: 14px; font-weight: 600; color: #f0f0f5; margin-bottom: 12px; }
+    .route-modal-desc { font-size: 11px; color: #5a5a72; margin-bottom: 12px; }
+    .route-option {
+      display: block; width: 100%; padding: 8px 12px; margin-bottom: 4px;
+      background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.06);
+      border-radius: 6px; cursor: pointer; color: #9d9db5; font-size: 13px;
+      text-align: left; transition: all 0.12s;
+    }
+    .route-option:hover { background: rgba(129,140,248,0.08); color: #f0f0f5; border-color: rgba(129,140,248,0.25); }
+    .route-option.taken { color: #5a5a72; }
+    .route-option.taken::after { content: ' (replace)'; font-size: 10px; color: #fbbf24; }
+    .route-divider { height: 0.5px; background: rgba(255,255,255,0.06); margin: 8px 0; }
+    .route-custom {
+      display: flex; gap: 6px; margin-top: 4px;
+    }
+    .route-custom input {
+      flex: 1; padding: 7px 10px; background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(255,255,255,0.08); border-radius: 6px;
+      color: #f0f0f5; font-size: 12px; outline: none;
+    }
+    .route-custom input::placeholder { color: #5a5a72; }
+    .route-custom input:focus { border-color: rgba(129,140,248,0.4); }
+    .route-custom button {
+      padding: 0 12px; background: rgba(129,140,248,0.1); border: 0.5px solid rgba(129,140,248,0.3);
+      border-radius: 6px; color: #818cf8; font-size: 11px; cursor: pointer;
+    }
+    .route-modal-cancel {
+      display: block; width: 100%; margin-top: 8px; padding: 6px;
+      background: none; border: none; color: #5a5a72; font-size: 11px;
+      cursor: pointer; text-align: center;
+    }
+    .route-modal-cancel:hover { color: #9d9db5; }
 
     /* Selected Build sidebar section */
     .selected-section { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 0.5px solid rgba(129,140,248,0.12); }
@@ -579,18 +622,67 @@ async function saveSelected() {
   } catch {}
 }
 
+function showRouteModal(onSelect) {
+  const routes = ['/search', '/newsfeed', '/aitrends', '/graph', '/settings', '/'];
+  const overlay = document.createElement('div');
+  overlay.className = 'route-modal-overlay';
+  overlay.innerHTML = `
+    <div class="route-modal">
+      <h3>Select page route</h3>
+      <div class="route-modal-desc">Choose which page this represents, or type a custom route.</div>
+      ${routes.map(r => {
+        const taken = selectedBuild.pages[r];
+        return `<button class="route-option${taken?' taken':''}" data-route="${r}">${r}</button>`;
+      }).join('')}
+      <div class="route-divider"></div>
+      <div class="route-custom">
+        <input type="text" placeholder="/custom-route" id="custom-route-input">
+        <button onclick="document.getElementById('custom-route-input').value && selectRoute(document.getElementById('custom-route-input').value)">Add</button>
+      </div>
+      <button class="route-modal-cancel" onclick="closeRouteModal()">Cancel</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeRouteModal();
+    const btn = e.target.closest('.route-option');
+    if (btn) selectRoute(btn.dataset.route);
+  });
+  document.getElementById('custom-route-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.value) selectRoute(e.target.value);
+    if (e.key === 'Escape') closeRouteModal();
+  });
+
+  window._routeModalCallback = onSelect;
+}
+
+function closeRouteModal() {
+  document.querySelector('.route-modal-overlay')?.remove();
+  window._routeModalCallback = null;
+}
+
+async function selectRoute(route) {
+  if (!route.startsWith('/')) route = '/' + route;
+  closeRouteModal();
+  if (window._routeModalCallback) {
+    await window._routeModalCallback(route);
+  }
+}
+
 async function selectCurrentPage() {
   if (M.length === 0) return;
-  const routes = ['/search', '/newsfeed', '/aitrends', '/graph', '/settings', '/'];
-  const route = prompt('Which page route should this mockup represent?\n\n' + routes.join('\n'));
-  if (!route) return;
-  selectedBuild.pages[route] = {
-    source: M[S.cur].file,
-    selectedAt: new Date().toISOString().split('T')[0],
-    note: null
-  };
-  await saveSelected();
-  render();
+  showRouteModal(async (route) => {
+    selectedBuild.pages[route] = {
+      source: M[S.cur].file,
+      selectedAt: new Date().toISOString().split('T')[0],
+      note: null
+    };
+    await saveSelected();
+    render();
+    // Scroll sidebar to Selected section
+    const selSection = document.getElementById('selected-section');
+    if (selSection) selSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
 
 async function removeSelectedPage(route) {
@@ -601,16 +693,18 @@ async function removeSelectedPage(route) {
 
 async function selectComponent(compName) {
   if (!compName) return;
-  const route = prompt('Add to which page? (/search, /newsfeed, /aitrends, /graph, global)');
-  if (!route) return;
-  selectedBuild.components[compName] = {
-    source: M[S.cur].file,
-    page: route,
-    selectedAt: new Date().toISOString().split('T')[0],
-    note: null
-  };
-  await saveSelected();
-  renderComponents();
+  showRouteModal(async (route) => {
+    selectedBuild.components[compName] = {
+      source: M[S.cur].file,
+      page: route,
+      selectedAt: new Date().toISOString().split('T')[0],
+      note: null
+    };
+    await saveSelected();
+    renderComponents();
+    const selSection = document.getElementById('selected-section');
+    if (selSection) selSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
 
 async function removeSelectedComponent(compName) {
@@ -699,7 +793,7 @@ function render() {
   const allSelPages = [...new Set([...selPageRoutes, ...Object.keys(selCompsByPage)])];
 
   if (allSelPages.length > 0) {
-    nh += `<div class="selected-section">
+    nh += `<div class="selected-section" id="selected-section">
       <div class="selected-label">Selected Build</div>`;
     allSelPages.forEach(route => {
       const pageData = selectedBuild.pages[route];
