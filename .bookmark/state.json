@@ -3,8 +3,8 @@
   "session_id": "",
   "compaction_count": 0,
   "current_threshold": 0.2,
-  "last_snapshot_time": 1774597437888,
-  "last_event_time": 1774597788227,
+  "last_snapshot_time": 1774597904408,
+  "last_event_time": 1774598333982,
   "snapshot_interval_minutes": 20,
   "session_history": [],
   "quality_blocks": 1

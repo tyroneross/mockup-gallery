@@ -1,8 +1,8 @@
 # File Trail
-> 10 files, ~1050 lines changed total
+> 10 files, ~1106 lines changed total
 
 - `docs/plans/2026-03-26-lifecycle-states.md` (write ~397L) — +fn getProjectLastChange, +fn categorize, +fn archiveCurrent, +fn markImplemented
-- `gallery/gallery.html` (edit ~284L) — +fn showRouteModal, +fn closeRouteModal, +fn selectRoute
+- `gallery/gallery.html` (edit ~340L) — +fn showRouteModal, +fn closeRouteModal, +fn selectRoute
 - `DESIGN.md` (write ~101L)
 - `DESIGN-SELECTED.md` (write ~76L)
 - `hooks/check-pending.mjs` (write ~65L) — +import fs, +import path, +fn readJson
