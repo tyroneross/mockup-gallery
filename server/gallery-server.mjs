@@ -184,6 +184,24 @@ function handler(req, res) {
     return notFound(res);
   }
 
+  // GET /selected — return selected build
+  if (req.method === 'GET' && pathname === '/selected') {
+    const data = readJsonFile(path.join(STORAGE_DIR, 'selected.json'));
+    return json(res, data || { pages: {}, components: {} });
+  }
+
+  // POST /selected — update selected.json
+  if (req.method === 'POST' && pathname === '/selected') {
+    readBody(req).then(body => {
+      fs.writeFileSync(path.join(STORAGE_DIR, 'selected.json'), body, 'utf8');
+      fs.writeFileSync(path.join(STORAGE_DIR, 'last-change.json'), JSON.stringify({
+        timestamp: new Date().toISOString(), source: 'selected-update'
+      }));
+      json(res, { ok: true });
+    }).catch(e => json(res, { error: e.message }, 500));
+    return;
+  }
+
   // POST /save-accepted — write accepted-designs.json
   if (req.method === 'POST' && pathname === '/save-accepted') {
     readBody(req).then(body => {

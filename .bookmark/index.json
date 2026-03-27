@@ -1,15 +1,43 @@
 {
   "version": "1.0.0",
   "project_path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery",
-  "last_updated": 1774591039332,
+  "last_updated": 1774596741509,
   "stats": {
-    "total_snapshots": 12,
+    "total_snapshots": 16,
     "compaction_cycles": 0,
     "last_compaction": 0,
-    "last_snapshot": 1774591039332,
-    "last_time_based": 1774591039332
+    "last_snapshot": 1774596741508,
+    "last_time_based": 1774596741508
   },
   "snapshots": [
+    {
+      "id": "SNAP_20260327_003221",
+      "timestamp": 1774596741508,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 9
+    },
+    {
+      "id": "SNAP_20260326_235028",
+      "timestamp": 1774594228182,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 9
+    },
+    {
+      "id": "SNAP_20260326_234942",
+      "timestamp": 1774594182804,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 9
+    },
+    {
+      "id": "SNAP_20260326_230228",
+      "timestamp": 1774591348555,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 9
+    },
     {
       "id": "SNAP_20260326_225719",
       "timestamp": 1774591039332,
