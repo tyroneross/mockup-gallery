@@ -102,6 +102,21 @@ function readJsonFile(filePath) {
   try { return JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch { return null; }
 }
 
+function getProjectLastChange() {
+  try {
+    const ts = execSync('git log -1 --format=%ct', { cwd: PROJECT_ROOT, stdio: ['pipe','pipe','pipe'] }).toString().trim();
+    return parseInt(ts, 10) * 1000;
+  } catch {
+    let latest = 0;
+    for (const dir of ['src', 'app', 'components']) {
+      const full = path.join(PROJECT_ROOT, dir);
+      if (!fs.existsSync(full)) continue;
+      try { if (fs.statSync(full).mtimeMs > latest) latest = fs.statSync(full).mtimeMs; } catch {}
+    }
+    return latest || Date.now();
+  }
+}
+
 // ── Request handler ───────────────────────────────────────────────────────
 function handler(req, res) {
   const url = new URL(req.url, `http://localhost`);
@@ -116,10 +131,10 @@ function handler(req, res) {
     return serveFile(res, path.join(GALLERY_DIR, 'gallery.html'), 'text/html; charset=utf-8');
   }
 
-  // GET /mockups → file list
+  // GET /mockups → file list (main + archive)
   if (req.method === 'GET' && pathname === '/mockups') {
     try {
-      const files = fs.readdirSync(MOCKUP_DIR)
+      const mainFiles = fs.readdirSync(MOCKUP_DIR)
         .filter(f => f.endsWith('.html'))
         .map(f => {
           const stat = fs.statSync(path.join(MOCKUP_DIR, f));
@@ -127,22 +142,45 @@ function handler(req, res) {
             file: f,
             name: f.replace(/\.html$/, '').replace(/[-_]/g, ' '),
             modified: stat.mtime.toISOString(),
+            modifiedMs: stat.mtimeMs,
             size: stat.size,
+            archived: false,
           };
-        })
-        .sort((a, b) => b.modified.localeCompare(a.modified));
+        });
+      const archiveDir = path.join(MOCKUP_DIR, 'archive');
+      const archiveFiles = fs.existsSync(archiveDir)
+        ? fs.readdirSync(archiveDir)
+            .filter(f => f.endsWith('.html'))
+            .map(f => {
+              const stat = fs.statSync(path.join(archiveDir, f));
+              return {
+                file: f,
+                name: f.replace(/\.html$/, '').replace(/[-_]/g, ' '),
+                modified: stat.mtime.toISOString(),
+                modifiedMs: stat.mtimeMs,
+                size: stat.size,
+                archived: true,
+              };
+            })
+        : [];
+      const files = [...mainFiles, ...archiveFiles]
+        .sort((a, b) => b.modifiedMs - a.modifiedMs);
       return json(res, files);
     } catch (e) {
       return json(res, { error: e.message }, 500);
     }
   }
 
-  // GET /mockup/<filename>
+  // GET /mockup/<filename> — try main dir, then archive
   if (req.method === 'GET' && pathname.startsWith('/mockup/')) {
     const filename = decodeURIComponent(pathname.slice('/mockup/'.length));
     // Safety: no path traversal
     if (filename.includes('..') || filename.includes('/')) return notFound(res);
-    return serveFile(res, path.join(MOCKUP_DIR, filename), 'text/html; charset=utf-8');
+    const mainPath = path.join(MOCKUP_DIR, filename);
+    if (fs.existsSync(mainPath)) return serveFile(res, mainPath, 'text/html; charset=utf-8');
+    const archivePath = path.join(MOCKUP_DIR, 'archive', filename);
+    if (fs.existsSync(archivePath)) return serveFile(res, archivePath, 'text/html; charset=utf-8');
+    return notFound(res);
   }
 
   // POST /save
@@ -165,6 +203,69 @@ function handler(req, res) {
   if (req.method === 'GET' && pathname === '/accepted') {
     const data = readJsonFile(path.join(STORAGE_DIR, 'accepted-designs.json'));
     return json(res, data || {});
+  }
+
+  // GET /project-info
+  if (req.method === 'GET' && pathname === '/project-info') {
+    const lastChange = getProjectLastChange();
+    let projectName = path.basename(PROJECT_ROOT);
+    try { const pkg = readJsonFile(path.join(PROJECT_ROOT, 'package.json')); if (pkg?.name) projectName = pkg.name; } catch {}
+    return json(res, { projectName, lastChange, lastChangeISO: new Date(lastChange).toISOString() });
+  }
+
+  // POST /archive/<filename> — move to archive subfolder
+  if (req.method === 'POST' && pathname.startsWith('/archive/')) {
+    const filename = decodeURIComponent(pathname.slice('/archive/'.length));
+    if (filename.includes('..') || filename.includes('/')) return json(res, { error: 'invalid filename' }, 400);
+    const src = path.join(MOCKUP_DIR, filename);
+    const archiveDir = path.join(MOCKUP_DIR, 'archive');
+    const dest = path.join(archiveDir, filename);
+    if (!fs.existsSync(src)) return json(res, { error: 'file not found' }, 404);
+    if (!fs.existsSync(archiveDir)) fs.mkdirSync(archiveDir, { recursive: true });
+    fs.renameSync(src, dest);
+    return json(res, { ok: true, archived: filename });
+  }
+
+  // POST /unarchive/<filename> — move back from archive
+  if (req.method === 'POST' && pathname.startsWith('/unarchive/')) {
+    const filename = decodeURIComponent(pathname.slice('/unarchive/'.length));
+    if (filename.includes('..') || filename.includes('/')) return json(res, { error: 'invalid filename' }, 400);
+    const src = path.join(MOCKUP_DIR, 'archive', filename);
+    const dest = path.join(MOCKUP_DIR, filename);
+    if (!fs.existsSync(src)) return json(res, { error: 'file not found in archive' }, 404);
+    fs.renameSync(src, dest);
+    return json(res, { ok: true, unarchived: filename });
+  }
+
+  // GET /implemented
+  if (req.method === 'GET' && pathname === '/implemented') {
+    const data = readJsonFile(path.join(STORAGE_DIR, 'implemented.json'));
+    return json(res, data || {});
+  }
+
+  // POST /implement
+  if (req.method === 'POST' && pathname === '/implement') {
+    readBody(req).then(body => {
+      const update = JSON.parse(body);
+      const filePath = path.join(STORAGE_DIR, 'implemented.json');
+      const existing = readJsonFile(filePath) || {};
+      const { file, component, status, codePath } = update;
+      if (!file) return json(res, { error: 'file required' }, 400);
+      if (!existing[file]) existing[file] = { status: 'designed', date: new Date().toISOString().split('T')[0], components: {} };
+      if (component) {
+        existing[file].components[component] = { status: status || 'implemented', file: codePath || null };
+        const compStatuses = Object.values(existing[file].components).map(c => c.status);
+        if (compStatuses.every(s => s === 'implemented')) existing[file].status = 'implemented';
+        else if (compStatuses.some(s => s === 'implemented')) existing[file].status = 'partial';
+        else existing[file].status = 'designed';
+      } else {
+        existing[file].status = status || 'implemented';
+      }
+      existing[file].date = new Date().toISOString().split('T')[0];
+      fs.writeFileSync(filePath, JSON.stringify(existing, null, 2));
+      json(res, { ok: true, implemented: existing[file] });
+    }).catch(e => json(res, { error: e.message }, 500));
+    return;
   }
 
   // Static files from gallery dir (CSS, JS, etc.)
