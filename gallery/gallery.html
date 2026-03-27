@@ -224,6 +224,14 @@
     </div>
     <div id="sidebar-nav"><div class="loading">Loading mockups...</div></div>
     <div class="save-status" id="save-status">Auto-saves to file</div>
+    <div style="padding: 0 8px; margin-bottom: 8px;">
+      <button id="finalize-btn" style="
+        width: 100%; padding: 6px 0; border-radius: 6px;
+        background: rgba(52,211,153,0.08); border: 0.5px solid rgba(52,211,153,0.25);
+        color: #34d399; font-size: 10px; font-weight: 500; cursor: pointer;
+        transition: all 0.15s;
+      ">Finalize Accepted</button>
+    </div>
     <div class="sidebar-footer">
       <div class="key-row"><span class="kbd">1</span><span class="key-label">Approve</span></div>
       <div class="key-row"><span class="kbd">2</span><span class="key-label">Maybe</span></div>
@@ -392,28 +400,41 @@ function categorize(mockups, pInfo, iData, sData) {
 }
 
 // ── Components ─────────────────────────────────────────────────────────────
-// Auto-detect components from h2/h3 tags inside iframe — best-effort
+// Auto-detect components from data-component attributes or clean h2/h3 tags
 function tryAutoDetect(file, iframeEl) {
   if (!iframeEl) return;
+  // Skip if components already exist for this file (user added manually or previously detected)
+  if (S.customComps[file] && S.customComps[file].length > 0) return;
   try {
     const doc = iframeEl.contentDocument || iframeEl.contentWindow?.document;
     if (!doc) return;
+
+    // Priority 1: data-component attributes (explicit, reliable)
+    const dataComps = doc.querySelectorAll('[data-component]');
+    if (dataComps.length > 0) {
+      S.customComps[file] = [...new Set([...dataComps].map(el => el.dataset.component).filter(Boolean))];
+      saveLocal(); renderComponents();
+      return;
+    }
+
+    // Priority 2: h2/h3 tags — but only if they look like section labels
+    // Skip if: too many (>8 = probably article content), too long (>60 chars = probably a headline)
     const tags = doc.querySelectorAll('h2, h3');
-    if (tags.length === 0) return;
-    if (!S.customComps[file]) S.customComps[file] = [];
-    const existing = new Set(S.customComps[file]);
-    let added = false;
+    if (tags.length === 0 || tags.length > 8) return;
+
+    const names = [];
     tags.forEach(t => {
       const txt = t.textContent?.trim();
-      if (txt && !existing.has(txt)) {
-        S.customComps[file].push(txt);
-        existing.add(txt);
-        added = true;
-      }
+      if (txt && txt.length <= 60 && !txt.includes('\n')) names.push(txt);
     });
-    if (added) { saveLocal(); renderComponents(); }
-  } catch {}
-  // cross-origin iframes will throw — that's fine, we just skip
+
+    if (names.length > 0 && names.length <= 8) {
+      S.customComps[file] = [...new Set(names)];
+      saveLocal(); renderComponents();
+    }
+  } catch {
+    // Cross-origin — silently skip, don't leave garbled state
+  }
 }
 
 function allComps(file) {
@@ -845,6 +866,52 @@ document.getElementById('refresh-btn').addEventListener('click', function () {
   fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
   showAddForm = false;
   render();
+});
+
+// Finalize Accepted — auto-generate accepted-designs.json from YAY-rated mockups
+document.getElementById('finalize-btn').addEventListener('click', async function () {
+  const approved = [], rejected = [], approvedPatterns = [], rejectedPatterns = [];
+
+  for (const m of M) {
+    const r = S.rat[m.file];
+    const comps = allComps(m.file);
+    const compDetails = {};
+    comps.forEach(c => {
+      const cr = S.comp[m.file]?.[c]?.rating;
+      const cn = S.comp[m.file]?.[c]?.note;
+      compDetails[c] = { rating: cr || 'unrated', note: cn || null };
+    });
+
+    if (r === 'yay') {
+      approved.push({ page: m.name, mockup: m.file, status: 'accepted', components: compDetails, notes: S.notes[m.file] || null });
+      comps.forEach(c => { if (compDetails[c].rating === 'yay' || !compDetails[c].rating || compDetails[c].rating === 'unrated') approvedPatterns.push(c); });
+    } else if (r === 'nay') {
+      rejected.push({ page: m.name, mockup: m.file, status: 'rejected', notes: S.notes[m.file] || null });
+      comps.forEach(c => { if (compDetails[c].rating === 'nay') rejectedPatterns.push(c); });
+    }
+  }
+
+  const acceptedDesigns = {
+    updated: new Date().toISOString().split('T')[0],
+    accepted: approved,
+    rejected: rejected,
+    design_patterns: {
+      approved: [...new Set(approvedPatterns)],
+      rejected: [...new Set(rejectedPatterns)]
+    }
+  };
+
+  try {
+    // Save to server as accepted-designs.json
+    await fetch('/save-accepted', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(acceptedDesigns, null, 2) });
+    flash('save-status', 'Accepted designs finalized!', '#34d399');
+  } catch {
+    // Fallback: save via the regular save endpoint won't work for a different file
+    // Download as file instead
+    const blob = new Blob([JSON.stringify(acceptedDesigns, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'accepted-designs.json'; a.click();
+    flash('save-status', 'Downloaded accepted-designs.json', '#34d399');
+  }
 });
 
 document.addEventListener('keydown', function (e) {

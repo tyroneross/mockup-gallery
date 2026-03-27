@@ -184,6 +184,19 @@ function handler(req, res) {
     return notFound(res);
   }
 
+  // POST /save-accepted — write accepted-designs.json
+  if (req.method === 'POST' && pathname === '/save-accepted') {
+    readBody(req).then(body => {
+      fs.writeFileSync(path.join(STORAGE_DIR, 'accepted-designs.json'), body, 'utf8');
+      fs.writeFileSync(path.join(STORAGE_DIR, 'last-change.json'), JSON.stringify({
+        timestamp: new Date().toISOString(),
+        source: 'finalize-accepted'
+      }));
+      json(res, { ok: true });
+    }).catch(e => json(res, { error: e.message }, 500));
+    return;
+  }
+
   // POST /save
   if (req.method === 'POST' && pathname === '/save') {
     readBody(req).then(body => {

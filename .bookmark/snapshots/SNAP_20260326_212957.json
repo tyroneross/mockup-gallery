@@ -1,0 +1,96 @@
+{
+  "snapshot_id": "SNAP_20260326_212957",
+  "timestamp": 1774585797190,
+  "session_id": "21402429-a30c-4ee4-8598-e83e42bb78eb",
+  "project_path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery",
+  "trigger": "session_end",
+  "compaction_cycle": 0,
+  "files_changed": [
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/{.claude-plugin,.claude/commands,.claude/skills/mockup-review,.claude/hooks,server,gallery}",
+      "operations": [
+        "create"
+      ],
+      "lines_changed": 0
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/.claude-plugin/plugin.json",
+      "operations": [
+        "write"
+      ],
+      "lines_changed": 7
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/DESIGN.md",
+      "operations": [
+        "write"
+      ],
+      "lines_changed": 101
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/docs/plans/2026-03-26-lifecycle-states.md",
+      "operations": [
+        "write"
+      ],
+      "lines_changed": 397,
+      "summary": "+fn getProjectLastChange, +fn categorize, +fn archiveCurrent, +fn markImplemented"
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/.claude/commands/mockup-status.md",
+      "operations": [
+        "write"
+      ],
+      "lines_changed": 35
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/server/gallery-server.mjs",
+      "operations": [
+        "edit"
+      ],
+      "lines_changed": 15
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/gallery/gallery.html",
+      "operations": [
+        "edit"
+      ],
+      "lines_changed": 61
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/hooks/check-pending.mjs",
+      "operations": [
+        "write"
+      ],
+      "lines_changed": 65,
+      "summary": "+import fs, +import path, +fn readJson"
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/.claude/commands/mockup-selections.md",
+      "operations": [
+        "write"
+      ],
+      "lines_changed": 36
+    }
+  ],
+  "tools_summary": {
+    "Skill": 7,
+    "Agent": 42,
+    "Read": 75,
+    "Write": 25,
+    "ToolSearch": 8,
+    "ExitPlanMode": 7,
+    "Grep": 19,
+    "WebFetch": 3,
+    "Edit": 70,
+    "Bash": 76,
+    "mcp__plugin_playwright_playwright__browser_navigate": 4,
+    "mcp__plugin_playwright_playwright__browser_install": 1,
+    "TaskCreate": 24,
+    "TaskUpdate": 48,
+    "SendMessage": 1,
+    "Glob": 1,
+    "mcp__plugin_playwright_playwright__browser_evaluate": 1,
+    "AskUserQuestion": 1
+  },
+  "prior_snapshot_id": "SNAP_20260326_211430"
+}
