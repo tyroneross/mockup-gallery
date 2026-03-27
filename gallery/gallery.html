@@ -53,8 +53,12 @@
     .ni-dot.r-ok { background: #fbbf24; }
     .ni-dot.r-nay { background: #fb7185; }
     .ni-dot.r-mixed { background: linear-gradient(135deg, #34d399, #818cf8, #fbbf24); }
+    .ni-dot.r-impl { background: #34d399; }
+    .ni-dot.r-archived { background: #fb7185; }
     .ni-name { font-size: 12px; color: #9d9db5; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ni-page { font-size: 9px; color: #5a5a72; flex-shrink: 0; }
+    .ni-age { font-size: 9px; color: #5a5a72; flex-shrink: 0; white-space: nowrap; }
+    .ni-progress { font-size: 9px; color: #5a5a72; flex-shrink: 0; font-family: monospace; }
     .save-status { padding: 0 8px; margin-bottom: 16px; font-size: 10px; color: #5a5a72; text-align: center; }
     .sidebar-footer { margin-top: auto; padding: 12px 8px 0; border-top: 0.5px solid rgba(255,255,255,0.04); }
     .key-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -99,6 +103,26 @@
     .rate-btn.on-ok    { color: #fbbf24; border-color: rgba(251,191,36,0.35);  background: rgba(251,191,36,0.05); }
     .rate-btn.on-nay   { color: #fb7185; border-color: rgba(251,113,133,0.35); background: rgba(251,113,133,0.05); }
     .rate-btn.sm { padding: 3px 10px; height: 24px; font-size: 10px; }
+
+    /* Archive button */
+    .archive-btn {
+      width: auto; padding: 0 8px; height: 28px; display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.06);
+      border-radius: 6px; cursor: pointer; color: #5a5a72; font-size: 11px; transition: all 0.12s;
+      white-space: nowrap;
+    }
+    .archive-btn:hover { color: #fbbf24; background: rgba(251,191,36,0.06); border-color: rgba(251,191,36,0.3); }
+
+    /* Implement button */
+    .impl-btn {
+      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.08);
+      border-radius: 4px; cursor: pointer; color: #5a5a72; font-size: 11px; line-height: 1;
+      transition: all 0.12s; flex-shrink: 0;
+    }
+    .impl-btn:hover { color: #34d399; border-color: rgba(52,211,153,0.4); background: rgba(52,211,153,0.06); }
+    .impl-btn.done { color: #34d399; border-color: rgba(52,211,153,0.4); background: rgba(52,211,153,0.1); cursor: default; }
+    .impl-path { font-size: 9px; color: #5a5a72; font-family: monospace; margin-top: 2px; padding-left: 2px; }
 
     /* Preview + component panel */
     .preview-split { flex: 1; display: flex; overflow: hidden; }
@@ -219,6 +243,7 @@
         <div class="review-meta" id="r-meta">-</div>
       </div>
       <span class="position-ct" id="pos-ct"></span>
+      <button class="archive-btn" id="archive-btn" title="Archive this mockup">Archive</button>
       <button class="arrow-btn" id="refresh-btn" title="Clear all ratings and comments"
         style="margin-right:4px; color:#fb7185; font-size:11px; width:auto; padding:0 8px;">Reset</button>
       <div class="rating-group" id="page-rating"></div>
@@ -257,8 +282,19 @@ const LS_KEY = 'mockup_gallery_state';
 const LS_VER = 'mockup_gallery_ver';
 
 // ── State ──────────────────────────────────────────────────────────────────
-let M = []; // array of { file, name, modified, size }
+let M = []; // array of { file, name, modified, modifiedMs, size, archived? }
 let ACCEPTED = {}; // { "filename.html": true } from server
+
+// Lifecycle data
+let projectInfo = { lastChange: 0, projectName: 'Project' };
+let implData = {};       // { "file.html": { "Component": { status, codePath } } }
+let selectionsData = {}; // from /selections
+
+// Categorized lists
+let catActive = [], catImplemented = [], catArchived = [];
+
+// Sidebar section collapse state
+let sectionCollapsed = { implemented: true, archive: true };
 
 // S.comp[file] = { "ComponentName": { rating, note } }
 // S.customComps[file] = ["ComponentName", ...] — user-added components
@@ -312,6 +348,47 @@ function flash(id, text, color) {
   const el = document.getElementById(id);
   el.textContent = text; el.style.color = color;
   setTimeout(() => { el.textContent = 'Auto-saves to file'; el.style.color = '#5a5a72'; }, 1400);
+}
+
+// ── Relative age helper ────────────────────────────────────────────────────
+function relAge(ms) {
+  if (!ms) return '';
+  const diff = Date.now() - ms;
+  const secs = Math.floor(diff / 1000);
+  if (secs < 86400) return 'today';
+  const days = Math.floor(secs / 86400);
+  if (days < 7) return days + 'd ago';
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return weeks + 'w ago';
+  const months = Math.floor(days / 30);
+  if (months < 12) return months + 'mo ago';
+  return Math.floor(days / 365) + 'y ago';
+}
+
+// ── Categorize mockups ─────────────────────────────────────────────────────
+function categorize(mockups, pInfo, iData, sData) {
+  const active = [], implemented = [], archived = [];
+  const ratedFiles = new Set();
+  if (sData.selections) {
+    sData.selections.forEach(s => { if (s.rating && s.rating !== 'unrated') ratedFiles.add(s.file); });
+  }
+
+  for (const m of mockups) {
+    if (m.archived) { archived.push(m); continue; }
+    if (iData[m.file]) { m.implStatus = iData[m.file]; implemented.push(m); continue; }
+    m.isRecent = m.modifiedMs >= (pInfo.lastChange || 0);
+    active.push(m);
+  }
+
+  // Sort active: unrated first, then newest
+  active.sort((a, b) => {
+    const aRated = ratedFiles.has(a.file) ? 1 : 0;
+    const bRated = ratedFiles.has(b.file) ? 1 : 0;
+    if (aRated !== bRated) return aRated - bRated;
+    return (b.modifiedMs || 0) - (a.modifiedMs || 0);
+  });
+
+  return { active, implemented, archived };
 }
 
 // ── Components ─────────────────────────────────────────────────────────────
@@ -403,6 +480,36 @@ function dotClass(f) {
   return 'r-mixed';
 }
 
+// ── Archive / Implement actions ────────────────────────────────────────────
+async function archiveCurrent() {
+  if (M.length === 0) return;
+  if (!confirm('Archive "' + M[S.cur].name + '"? Moves to mockups/archive/.')) return;
+  await fetch('/archive/' + encodeURIComponent(M[S.cur].file), { method: 'POST' });
+  location.reload();
+}
+
+async function markImpl(file, component) {
+  const codePath = prompt('Code file path (optional):');
+  await fetch('/implement', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file, component, status: 'implemented', codePath: codePath || null })
+  });
+  // Refresh impl data
+  implData = await fetch('/implemented').then(r => r.json()).catch(() => ({}));
+  renderComponents();
+}
+
+// ── Implementation progress helpers ────────────────────────────────────────
+function implProgress(file) {
+  const data = implData[file];
+  if (!data || typeof data !== 'object') return null;
+  const comps = Object.keys(data);
+  if (comps.length === 0) return null;
+  const done = comps.filter(c => data[c]?.status === 'implemented').length;
+  return { done, total: comps.length };
+}
+
 // ── Navigation ─────────────────────────────────────────────────────────────
 function go(i) {
   if (i < 0 || i >= M.length) return;
@@ -439,47 +546,76 @@ function render() {
   const m = M[S.cur];
   const r = gr(m.file);
 
-  // Split mockups into Review, Accepted, and groups within Review
-  const reviewItems = [], acceptedItems = [];
-  M.forEach((x, i) => {
-    if (ACCEPTED[x.file]) acceptedItems.push({ ...x, i });
-    else reviewItems.push({ ...x, i });
-  });
+  // Re-categorize for sidebar
+  const cats = categorize(M, projectInfo, implData, selectionsData);
+  catActive = cats.active;
+  catImplemented = cats.implemented;
+  catArchived = cats.archived;
 
-  const reviewCount = reviewItems.length;
-  const ratedReview = reviewItems.filter(x => S.rat[x.file] || S.comp[x.file]).length;
-  document.getElementById('prog-ct').textContent = `${ratedReview} / ${reviewCount}`;
-  document.getElementById('prog-fill').style.width = `${Math.min(100, reviewCount ? (ratedReview / reviewCount) * 100 : 0)}%`;
-  document.getElementById('sidebar-sub').textContent = `${M.length} mockup${M.length !== 1 ? 's' : ''}`;
+  // Build index map: file -> M index
+  const fileIdx = {};
+  M.forEach((x, i) => { fileIdx[x.file] = i; });
+
+  // Progress: count rated in active set
+  const ratedActive = catActive.filter(x => S.rat[x.file] || S.comp[x.file]).length;
+  document.getElementById('prog-ct').textContent = `${ratedActive} / ${catActive.length}`;
+  document.getElementById('prog-fill').style.width = `${Math.min(100, catActive.length ? (ratedActive / catActive.length) * 100 : 0)}%`;
+  document.getElementById('sidebar-sub').textContent = projectInfo.projectName || `${M.length} mockup${M.length !== 1 ? 's' : ''}`;
 
   let nh = '';
 
-  // Review section
-  if (reviewItems.length > 0) {
-    nh += `<div class="nav-section"><div class="nav-label">Review</div>`;
-    reviewItems.forEach(x => {
-      nh += `<div class="nav-item${x.i === S.cur ? ' active' : ''}" onclick="go(${x.i})">
+  // ACTIVE section (always expanded)
+  if (catActive.length > 0) {
+    nh += `<div class="nav-section"><div class="nav-label">ACTIVE (${catActive.length})</div>`;
+    catActive.forEach(x => {
+      const idx = fileIdx[x.file];
+      const age = relAge(x.modifiedMs);
+      nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
         <span class="ni-dot ${dotClass(x.file)}"></span>
         <span class="ni-name">${esc(x.name)}</span>
+        ${age ? `<span class="ni-age">${age}</span>` : ''}
       </div>`;
     });
     nh += '</div>';
   }
 
-  // Accepted section — collapsed by default, green accent
-  if (acceptedItems.length > 0) {
+  // IMPLEMENTED section (collapsed by default, green accent)
+  if (catImplemented.length > 0) {
     nh += `<div class="nav-section" style="margin-top:12px;padding-top:12px;border-top:0.5px solid rgba(255,255,255,0.04);">
-      <div class="nav-label" style="cursor:pointer;color:#34d399;" onclick="toggleSection('accepted-list')">
-        Accepted (${acceptedItems.length}) &#9662;
-      </div>
-      <div id="accepted-list" style="display:none;">`;
-    acceptedItems.forEach(x => {
-      nh += `<div class="nav-item${x.i === S.cur ? ' active' : ''}" onclick="go(${x.i})" style="opacity:0.7;">
-        <span class="ni-dot r-yay"></span>
-        <span class="ni-name">${esc(x.name)}</span>
+      <div class="nav-label" style="cursor:pointer;color:#34d399;" onclick="sectionCollapsed.implemented=!sectionCollapsed.implemented;render();">
+        IMPLEMENTED (${catImplemented.length}) ${sectionCollapsed.implemented ? '&#9662;' : '&#9652;'}
       </div>`;
-    });
-    nh += '</div></div>';
+    if (!sectionCollapsed.implemented) {
+      catImplemented.forEach(x => {
+        const idx = fileIdx[x.file];
+        const prog = implProgress(x.file);
+        const progText = prog ? `[${prog.done}/${prog.total}]` : '';
+        nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
+          <span class="ni-dot r-impl"></span>
+          <span class="ni-name">${esc(x.name)}</span>
+          ${progText ? `<span class="ni-progress">${progText}</span>` : ''}
+        </div>`;
+      });
+    }
+    nh += '</div>';
+  }
+
+  // ARCHIVE section (collapsed by default, muted)
+  if (catArchived.length > 0) {
+    nh += `<div class="nav-section" style="margin-top:12px;padding-top:12px;border-top:0.5px solid rgba(255,255,255,0.04);">
+      <div class="nav-label" style="cursor:pointer;opacity:0.4;" onclick="sectionCollapsed.archive=!sectionCollapsed.archive;render();">
+        ARCHIVE (${catArchived.length}) ${sectionCollapsed.archive ? '&#9662;' : '&#9652;'}
+      </div>`;
+    if (!sectionCollapsed.archive) {
+      catArchived.forEach(x => {
+        const idx = fileIdx[x.file];
+        nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})" style="opacity:0.3;">
+          <span class="ni-dot r-archived"></span>
+          <span class="ni-name">${esc(x.name)}</span>
+        </div>`;
+      });
+    }
+    nh += '</div>';
   }
 
   document.getElementById('sidebar-nav').innerHTML = nh;
@@ -541,9 +677,15 @@ function renderComponents() {
     const cr = gcr(m.file, c);
     const cn = S.comp[m.file]?.[c]?.note || '';
     const ec = esc(c), ef = esc(m.file);
+    const isImpl = implData[m.file]?.[c]?.status === 'implemented';
+    const implCodePath = implData[m.file]?.[c]?.codePath || '';
     html += `<div class="cp-item">
       <div class="cp-item-header">
         <div class="cp-item-name">${ec}</div>
+        ${isImpl
+          ? `<span class="impl-btn done" title="Implemented">&#10003;</span>`
+          : `<span class="impl-btn" onclick="markImpl('${ef}','${ec}')" title="Mark as implemented">&#9675;</span>`
+        }
         <span class="cp-item-del" onclick="removeCompAndRender('${ef}','${ec}')" title="Remove">&#x2715;</span>
       </div>
       <div class="rating-group">
@@ -553,6 +695,7 @@ function renderComponents() {
       </div>
       <input type="text" class="cp-item-note" placeholder="Note on ${ec}..." value="${esc(cn)}"
         onblur="noteComp('${ef}','${ec}',this.value.trim())">
+      ${implCodePath ? `<div class="impl-path">${esc(implCodePath)}</div>` : ''}
     </div>`;
   });
 
@@ -620,10 +763,18 @@ async function init() {
     }
   } catch {}
 
-  // Fetch mockup list
+  // Fetch all data sources in parallel
   try {
-    const list = await fetch('/mockups').then(r => r.json());
-    if (Array.isArray(list)) M = list;
+    const [mockups, pInfo, iData, sData] = await Promise.all([
+      fetch('/mockups').then(r => r.json()),
+      fetch('/project-info').then(r => r.json()).catch(() => ({ lastChange: 0, projectName: 'Project' })),
+      fetch('/implemented').then(r => r.json()).catch(() => ({})),
+      fetch('/selections').then(r => r.json()).catch(() => ({})),
+    ]);
+    if (Array.isArray(mockups)) M = mockups;
+    projectInfo = pInfo;
+    implData = iData;
+    selectionsData = sData;
   } catch {
     document.getElementById('sidebar-nav').innerHTML = '<div style="font-size:11px;color:#fb7185;padding:0 8px;">Failed to load mockups. Is the server running?</div>';
     return;
@@ -649,6 +800,8 @@ document.getElementById('cp-add-btn').addEventListener('click', () => {
   showAddForm = !showAddForm;
   renderComponents();
 });
+
+document.getElementById('archive-btn').addEventListener('click', archiveCurrent);
 
 document.getElementById('refresh-btn').addEventListener('click', function () {
   if (!confirm('Clear all ratings and comments? This cannot be undone.')) return;
