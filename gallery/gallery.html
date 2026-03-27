@@ -116,6 +116,8 @@
       transition: all 0.15s; white-space: nowrap; letter-spacing: 0.02em;
     }
     .select-btn:hover { color: #fff; background: rgba(129,140,248,0.25); border-color: rgba(129,140,248,0.7); box-shadow: 0 0 12px rgba(129,140,248,0.15); }
+    .select-btn.is-selected { background: rgba(129,140,248,0.3); border-color: rgba(129,140,248,0.7); color: #fff; }
+    .select-btn.is-selected::before { content: '\\2713 '; }
 
     /* Refresh button -- small, muted */
     .refresh-btn {
@@ -371,10 +373,10 @@ let selectionsData = {}; // from /selections
 let selectedBuild = { pages: {}, components: {} }; // from /selected
 
 // Categorized lists
-let catActive = [], catArchived = [], catRejected = [];
+let catActive = [], catSelected = [], catArchived = [], catRejected = [];
 
 // Sidebar section collapse state
-let sectionCollapsed = { rejected: true, archive: true };
+let sectionCollapsed = { selected: false, rejected: true, archive: true };
 
 // S.comp[file] = { "ComponentName": { rating, note } }
 // S.customComps[file] = ["ComponentName", ...] -- user-added components
@@ -447,19 +449,22 @@ function relAge(ms) {
 
 // -- Categorize mockups ---------------------------------------------------
 function categorize(mockups, pInfo, iData, sData) {
-  const active = [], archived = [], rejected = [];
+  const active = [], archived = [], rejected = [], selected = [];
   const ratingMap = {};
   if (sData.selections) {
     sData.selections.forEach(s => { if (s.rating) ratingMap[s.file] = s.rating; });
   }
 
+  // Build set of selected source files
+  const selectedFiles = new Set(Object.values(selectedBuild.pages || {}).map(p => p.source));
+
   for (const m of mockups) {
     if (m.archived) { archived.push(m); continue; }
+    if (selectedFiles.has(m.file)) { selected.push(m); continue; }
 
     const rating = ratingMap[m.file];
     if (rating === 'nay') { rejected.push(m); continue; }
 
-    // Active: unrated + yay-rated items
     m.isRecent = m.modifiedMs >= (pInfo.lastChange || 0);
     active.push(m);
   }
@@ -472,7 +477,7 @@ function categorize(mockups, pInfo, iData, sData) {
     return (b.modifiedMs || 0) - (a.modifiedMs || 0);
   });
 
-  return { active, archived, rejected };
+  return { active, selected, archived, rejected };
 }
 
 // -- Components -----------------------------------------------------------
@@ -752,6 +757,7 @@ function render() {
   // Re-categorize for sidebar
   const cats = categorize(M, projectInfo, implData, selectionsData);
   catActive = cats.active;
+  catSelected = cats.selected;
   catArchived = cats.archived;
   catRejected = cats.rejected;
 
@@ -770,41 +776,40 @@ function render() {
 
   let nh = '';
 
-  // SELECTED BUILD section (top of sidebar, only when entries exist)
-  const selPageRoutes = Object.keys(selectedBuild.pages);
-  // Group components by page
+  // SELECTED section (top of sidebar — mockups chosen for implementation)
+  const selPageRoutes = Object.entries(selectedBuild.pages || {});
   const selCompsByPage = {};
-  Object.entries(selectedBuild.components).forEach(([compName, data]) => {
+  Object.entries(selectedBuild.components || {}).forEach(([compName, data]) => {
     const pg = data.page || 'global';
     if (!selCompsByPage[pg]) selCompsByPage[pg] = [];
     selCompsByPage[pg].push({ compName, source: data.source });
   });
-  const allSelPages = [...new Set([...selPageRoutes, ...Object.keys(selCompsByPage)])];
 
-  if (allSelPages.length > 0) {
+  if (selPageRoutes.length > 0 || Object.keys(selCompsByPage).length > 0) {
     nh += `<div class="selected-section" id="selected-section">
-      <div class="selected-label">Selected Build</div>`;
-    allSelPages.forEach(route => {
-      const pageData = selectedBuild.pages[route];
-      const routeComps = selCompsByPage[route] || [];
-      const srcFile = pageData ? pageData.source : null;
-      const srcIdx = srcFile ? fileIdx[srcFile] : -1;
-      nh += `<div class="sel-route">
-        <div class="sel-route-row" ${srcIdx >= 0 ? `onclick="go(${srcIdx})"` : ''}>
-          <span class="sel-route-name">${esc(route)}</span>
-          ${srcFile ? `<span class="sel-route-source" title="${esc(srcFile)}">${esc(srcFile.replace(/^.*[\\/]/, ''))}</span>` : ''}
-          ${pageData ? `<span class="sel-route-del" onclick="event.stopPropagation();removeSelectedPage('${esc(route)}')" title="Remove">&#x2715;</span>` : ''}
-        </div>`;
-      routeComps.forEach(({ compName, source }) => {
-        nh += `<div class="sel-comp-row">
-          <span style="color:#818cf8;font-size:9px;margin-right:2px;">+</span>
-          <span class="sel-comp-name" title="${esc(compName)}">${esc(compName)}</span>
-          ${source ? `<span class="sel-comp-source">(${esc(source.replace(/^.*[\\/]/, ''))})</span>` : ''}
-          <span class="sel-comp-del" onclick="removeSelectedComponent('${esc(compName)}')" title="Remove">&#x2715;</span>
+      <div class="nav-label" style="color:#818cf8;cursor:pointer;" onclick="sectionCollapsed.selected=!sectionCollapsed.selected;render();">
+        SELECTED (${catSelected.length}) ${sectionCollapsed.selected ? '&#9662;' : '&#9652;'}
+      </div>`;
+    if (!sectionCollapsed.selected) {
+      // Show selected mockups as nav items (clickable to preview)
+      catSelected.forEach(x => {
+        const idx = fileIdx[x.file];
+        const route = selPageRoutes.find(([, p]) => p.source === x.file);
+        nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
+          <span class="ni-dot" style="background:#818cf8;"></span>
+          <span class="ni-name">${esc(x.name)}</span>
+          <span class="ni-page" style="color:#818cf8;">${route ? esc(route[0]) : ''}</span>
         </div>`;
       });
-      nh += `</div>`;
-    });
+      // Show component additions grouped by page
+      Object.entries(selCompsByPage).forEach(([pg, comps]) => {
+        comps.forEach(({ compName, source }) => {
+          nh += `<div style="padding:2px 8px 2px 24px;font-size:10px;color:#7c7c9e;">
+            + ${esc(compName)} <span style="color:#5a5a72;">(${esc(pg)})</span>
+          </div>`;
+        });
+      });
+    }
     nh += `</div>`;
   }
 
@@ -878,6 +883,12 @@ function render() {
   pg.innerHTML = ['yay', 'nay'].map(v =>
     `<button class="rate-btn${r === v ? ' on-' + v : ''}" onclick="rate('${esc(m.file)}','${v}')">${{ yay: 'Yay', nay: 'Nay' }[v]}</button>`
   ).join('');
+
+  // Select button state
+  const selBtn = document.getElementById('select-btn');
+  const isSelected = Object.values(selectedBuild.pages || {}).some(p => p.source === m.file);
+  selBtn.className = 'select-btn' + (isSelected ? ' is-selected' : '');
+  selBtn.textContent = isSelected ? 'Selected' : 'Select';
 
   // Preview iframe
   const iframeHtml = `<iframe id="preview-iframe" src="/mockup/${encodeURIComponent(m.file)}?v=${GALLERY_VERSION}" loading="eager"></iframe>`;

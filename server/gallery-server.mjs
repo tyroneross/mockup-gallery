@@ -134,7 +134,7 @@ function handler(req, res) {
   // GET /mockups → file list (main + archive)
   if (req.method === 'GET' && pathname === '/mockups') {
     try {
-      const EXCLUDE = new Set(['gallery-v2.html', 'atomize-gallery.html', 'gallery.html']);
+      const EXCLUDE = new Set(['gallery-v2.html', 'atomize-gallery.html', 'gallery.html', 'selected', 'archive']);
       const mainFiles = fs.readdirSync(MOCKUP_DIR)
         .filter(f => f.endsWith('.html') && !EXCLUDE.has(f))
         .map(f => {
@@ -190,13 +190,28 @@ function handler(req, res) {
     return json(res, data || { pages: {}, components: {} });
   }
 
-  // POST /selected — update selected.json
+  // POST /selected — update selected.json + copy files to selected/ folder
   if (req.method === 'POST' && pathname === '/selected') {
     readBody(req).then(body => {
-      fs.writeFileSync(path.join(STORAGE_DIR, 'selected.json'), body, 'utf8');
+      const data = JSON.parse(body);
+      fs.writeFileSync(path.join(STORAGE_DIR, 'selected.json'), JSON.stringify(data, null, 2), 'utf8');
       fs.writeFileSync(path.join(STORAGE_DIR, 'last-change.json'), JSON.stringify({
         timestamp: new Date().toISOString(), source: 'selected-update'
       }));
+      // Copy selected source files to selected/ folder
+      const selectedDir = path.join(MOCKUP_DIR, 'selected');
+      if (!fs.existsSync(selectedDir)) fs.mkdirSync(selectedDir, { recursive: true });
+      // Clear old selected files
+      try { fs.readdirSync(selectedDir).forEach(f => fs.unlinkSync(path.join(selectedDir, f))); } catch {}
+      // Copy current selections
+      if (data.pages) {
+        for (const [route, info] of Object.entries(data.pages)) {
+          const src = path.join(MOCKUP_DIR, info.source);
+          if (fs.existsSync(src)) {
+            fs.copyFileSync(src, path.join(selectedDir, info.source));
+          }
+        }
+      }
       json(res, { ok: true });
     }).catch(e => json(res, { error: e.message }, 500));
     return;
