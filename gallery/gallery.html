@@ -389,10 +389,10 @@ let selectionsData = {}; // from /selections
 let selectedBuild = { pages: {}, components: {} }; // from /selected
 
 // Categorized lists
-let catActive = [], catImplemented = [], catArchived = [];
+let catActive = [], catImplemented = [], catArchived = [], catRejected = [];
 
 // Sidebar section collapse state
-let sectionCollapsed = { implemented: true, archive: true };
+let sectionCollapsed = { implemented: true, rejected: true, archive: true };
 
 // S.comp[file] = { "ComponentName": { rating, note } }
 // S.customComps[file] = ["ComponentName", ...] — user-added components
@@ -465,28 +465,32 @@ function relAge(ms) {
 
 // ── Categorize mockups ─────────────────────────────────────────────────────
 function categorize(mockups, pInfo, iData, sData) {
-  const active = [], implemented = [], archived = [];
-  const ratedFiles = new Set();
+  const active = [], implemented = [], archived = [], rejected = [];
+  const ratingMap = {};
   if (sData.selections) {
-    sData.selections.forEach(s => { if (s.rating && s.rating !== 'unrated') ratedFiles.add(s.file); });
+    sData.selections.forEach(s => { if (s.rating) ratingMap[s.file] = s.rating; });
   }
 
   for (const m of mockups) {
     if (m.archived) { archived.push(m); continue; }
     if (iData[m.file]) { m.implStatus = iData[m.file]; implemented.push(m); continue; }
+
+    const rating = ratingMap[m.file];
+    if (rating === 'nay') { rejected.push(m); continue; }
+
     m.isRecent = m.modifiedMs >= (pInfo.lastChange || 0);
     active.push(m);
   }
 
   // Sort active: unrated first, then newest
   active.sort((a, b) => {
-    const aRated = ratedFiles.has(a.file) ? 1 : 0;
-    const bRated = ratedFiles.has(b.file) ? 1 : 0;
+    const aRated = ratingMap[a.file] && ratingMap[a.file] !== 'unrated' ? 1 : 0;
+    const bRated = ratingMap[b.file] && ratingMap[b.file] !== 'unrated' ? 1 : 0;
     if (aRated !== bRated) return aRated - bRated;
     return (b.modifiedMs || 0) - (a.modifiedMs || 0);
   });
 
-  return { active, implemented, archived };
+  return { active, implemented, archived, rejected };
 }
 
 // ── Components ─────────────────────────────────────────────────────────────
@@ -765,6 +769,7 @@ function render() {
   catActive = cats.active;
   catImplemented = cats.implemented;
   catArchived = cats.archived;
+  catRejected = cats.rejected;
 
   // Build index map: file -> M index
   const fileIdx = {};
@@ -851,6 +856,25 @@ function render() {
           <span class="ni-dot r-impl"></span>
           <span class="ni-name">${esc(x.name)}</span>
           ${progText ? `<span class="ni-progress">${progText}</span>` : ''}
+        </div>`;
+      });
+    }
+    nh += '</div>';
+  }
+
+  // REJECTED section (collapsed by default, red accent)
+  if (catRejected.length > 0) {
+    nh += `<div class="nav-section" style="margin-top:12px;padding-top:12px;border-top:0.5px solid rgba(255,255,255,0.04);">
+      <div class="nav-label" style="cursor:pointer;color:#fb7185;opacity:0.7;" onclick="sectionCollapsed.rejected=!sectionCollapsed.rejected;render();">
+        REJECTED (${catRejected.length}) ${sectionCollapsed.rejected !== false ? '&#9662;' : '&#9652;'}
+      </div>`;
+    if (sectionCollapsed.rejected === false) {
+      catRejected.forEach(x => {
+        const idx = fileIdx[x.file];
+        nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})" style="opacity:0.4;">
+          <span class="ni-dot r-nay"></span>
+          <span class="ni-name">${esc(x.name)}</span>
+          <span class="ni-page">${esc(relAge(x))}</span>
         </div>`;
       });
     }
