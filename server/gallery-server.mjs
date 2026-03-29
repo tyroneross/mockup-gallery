@@ -17,7 +17,11 @@ function flag(name) {
 
 const PROJECT_ROOT = path.resolve(flag('--project') || process.cwd());
 let MOCKUP_DIR = flag('--dir') ? path.resolve(flag('--dir')) : null;
-const PORT_START = parseInt(flag('--port') || '8787', 10);
+// Stable port per project: hash project path into 8787-8887 range (unless --port is explicit)
+const EXPLICIT_PORT = flag('--port');
+const PORT_START = EXPLICIT_PORT
+  ? parseInt(EXPLICIT_PORT, 10)
+  : 8787 + (Array.from(PROJECT_ROOT).reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0) & 0x7fffffff) % 100;
 
 // Auto-scan for mockup dir
 if (!MOCKUP_DIR) {
@@ -115,6 +119,217 @@ function getProjectLastChange() {
     }
     return latest || Date.now();
   }
+}
+
+// ── Route detection ──────────────────────────────────────────────────────
+// Detects pages/screens/views from project structure for the route picker.
+// Returns { type, routes: [{ path, label, source }] }
+function detectProjectRoutes(root) {
+  const result = { type: 'unknown', routes: [] };
+
+  // 1. Next.js / React — app/ directory with page.tsx/jsx files
+  for (const base of ['app', 'src/app']) {
+    const appDir = path.join(root, base);
+    if (fs.existsSync(appDir) && fs.statSync(appDir).isDirectory()) {
+      result.type = 'nextjs';
+      scanNextRoutes(appDir, '/', result.routes);
+      if (result.routes.length > 0) return result;
+    }
+  }
+
+  // 2. Next.js Pages Router — pages/ directory
+  for (const base of ['pages', 'src/pages']) {
+    const pagesDir = path.join(root, base);
+    if (fs.existsSync(pagesDir) && fs.statSync(pagesDir).isDirectory()) {
+      result.type = 'nextjs-pages';
+      scanPagesRouter(pagesDir, '/', result.routes);
+      if (result.routes.length > 0) return result;
+    }
+  }
+
+  // 3. Swift / SwiftUI — look for .swift view files
+  const swiftViews = scanSwiftViews(root);
+  if (swiftViews.length > 0) {
+    result.type = 'swift';
+    result.routes = swiftViews;
+    return result;
+  }
+
+  // 4. Python (Flask/FastAPI) — scan for route decorators
+  const pyRoutes = scanPythonRoutes(root);
+  if (pyRoutes.length > 0) {
+    result.type = 'python';
+    result.routes = pyRoutes;
+    return result;
+  }
+
+  // 5. Static / SPA — scan for HTML files
+  for (const dir of ['public', 'dist', 'build', 'static']) {
+    const d = path.join(root, dir);
+    if (fs.existsSync(d)) {
+      const htmlFiles = fs.readdirSync(d).filter(f => f.endsWith('.html'));
+      if (htmlFiles.length > 0) {
+        result.type = 'static';
+        result.routes = htmlFiles.map(f => ({
+          path: '/' + f.replace(/\.html$/, '').replace(/^index$/, ''),
+          label: f.replace(/\.html$/, '') || 'Home',
+          source: `${dir}/${f}`
+        }));
+        return result;
+      }
+    }
+  }
+
+  return result;
+}
+
+// Next.js App Router: recursively find page.tsx/jsx files
+function scanNextRoutes(dir, routePrefix, routes) {
+  const SKIP = new Set(['node_modules', '.next', '.git', 'api', '_components', '_lib']);
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+
+  const hasPage = entries.some(e =>
+    e.isFile() && /^page\.(tsx?|jsx?)$/.test(e.name)
+  );
+  if (hasPage) {
+    const cleanRoute = routePrefix === '/' ? '/' : routePrefix.replace(/\/$/, '');
+    const label = cleanRoute === '/'
+      ? 'Home'
+      : cleanRoute.split('/').filter(Boolean).pop()
+          .replace(/^\[.*\]$/, ':param')
+          .replace(/[-_]/g, ' ')
+          .replace(/\b\w/g, c => c.toUpperCase());
+    routes.push({ path: cleanRoute, label, source: 'app/' + cleanRoute });
+  }
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (SKIP.has(entry.name)) continue;
+    if (entry.name.startsWith('_') || entry.name.startsWith('.')) continue;
+    // Skip route groups like (marketing) — don't add to path
+    const isGroup = /^\(.*\)$/.test(entry.name);
+    const nextPrefix = isGroup
+      ? routePrefix
+      : routePrefix + entry.name + '/';
+    scanNextRoutes(path.join(dir, entry.name), nextPrefix, routes);
+  }
+}
+
+// Next.js Pages Router
+function scanPagesRouter(dir, routePrefix, routes) {
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+
+  for (const entry of entries) {
+    if (entry.name.startsWith('_') || entry.name.startsWith('.')) continue;
+    if (entry.name === 'api') continue;
+    const full = path.join(dir, entry.name);
+    if (entry.isFile() && /\.(tsx?|jsx?)$/.test(entry.name)) {
+      const name = entry.name.replace(/\.(tsx?|jsx?)$/, '');
+      const route = name === 'index' ? routePrefix : routePrefix + name;
+      routes.push({ path: route, label: name === 'index' ? 'Home' : name.replace(/[-_]/g, ' '), source: full });
+    } else if (entry.isDirectory()) {
+      scanPagesRouter(full, routePrefix + entry.name + '/', routes);
+    }
+  }
+}
+
+// Swift/SwiftUI — find View files (files containing ": View" or "View {")
+function scanSwiftViews(root) {
+  const views = [];
+  const SKIP = new Set(['.build', '.git', 'DerivedData', 'Pods', 'node_modules', 'Packages']);
+  const seen = new Set();
+
+  function walk(dir, depth) {
+    if (depth > 6) return;
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+
+    for (const entry of entries) {
+      if (SKIP.has(entry.name) || entry.name.startsWith('.')) continue;
+      const full = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        walk(full, depth + 1);
+      } else if (entry.name.endsWith('.swift') && entry.name.includes('View')) {
+        const viewName = entry.name.replace('.swift', '');
+        if (seen.has(viewName)) continue;
+        seen.add(viewName);
+
+        // Derive a readable label: "SessionDetailView" → "Session Detail"
+        const label = viewName
+          .replace(/View$/, '')
+          .replace(/([a-z])([A-Z])/g, '$1 $2');
+
+        // Determine platform from path
+        const relPath = path.relative(root, full);
+        let platform = 'shared';
+        if (/\biOS\b/i.test(relPath)) platform = 'ios';
+        else if (/\bmacOS\b/i.test(relPath)) platform = 'macos';
+        else if (/\bwatchOS\b/i.test(relPath)) platform = 'watchos';
+        else if (/\bShared\b/i.test(relPath)) platform = 'shared';
+
+        views.push({
+          path: viewName,
+          label: label,
+          source: relPath,
+          platform
+        });
+      }
+    }
+  }
+
+  walk(root, 0);
+
+  // Sort: shared first, then by name
+  views.sort((a, b) => {
+    if (a.platform === 'shared' && b.platform !== 'shared') return -1;
+    if (b.platform === 'shared' && a.platform !== 'shared') return 1;
+    return a.label.localeCompare(b.label);
+  });
+
+  return views;
+}
+
+// Python — scan for @app.route / @router.get / @app.get decorators
+function scanPythonRoutes(root) {
+  const routes = [];
+  const seen = new Set();
+
+  function walk(dir, depth) {
+    if (depth > 4) return;
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+
+    for (const entry of entries) {
+      if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === '__pycache__' || entry.name === '.venv' || entry.name === 'venv') continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full, depth + 1);
+      } else if (entry.name.endsWith('.py')) {
+        try {
+          const content = fs.readFileSync(full, 'utf8');
+          const routePattern = /@(?:app|router|api)\.(get|post|route|put|delete|patch)\s*\(\s*["']([^"']+)/gi;
+          let match;
+          while ((match = routePattern.exec(content)) !== null) {
+            const route = match[2];
+            if (!seen.has(route)) {
+              seen.add(route);
+              routes.push({
+                path: route,
+                label: route.replace(/^\//, '').replace(/[{}<>]/g, ':').replace(/[-_\/]/g, ' ') || 'Root',
+                source: path.relative(root, full)
+              });
+            }
+          }
+        } catch {}
+      }
+    }
+  }
+
+  walk(root, 0);
+  return routes;
 }
 
 // ── Request handler ───────────────────────────────────────────────────────
@@ -320,6 +535,12 @@ function handler(req, res) {
     return;
   }
 
+  // GET /routes — auto-detect project pages/screens/views
+  if (req.method === 'GET' && pathname === '/routes') {
+    const detected = detectProjectRoutes(PROJECT_ROOT);
+    return json(res, detected);
+  }
+
   // Static files from gallery dir (CSS, JS, etc.)
   if (req.method === 'GET') {
     const rel = pathname.replace(/^\//, '');
@@ -348,8 +569,10 @@ function tryListen(port) {
   });
   server.listen(port, '127.0.0.1', () => {
     const url = `http://localhost:${port}`;
-    console.log(`Mockup Gallery`);
+    const projectName = path.basename(PROJECT_ROOT);
+    console.log(`Mockup Gallery — ${projectName}`);
     console.log(`  URL:      ${url}`);
+    console.log(`  Project:  ${PROJECT_ROOT}`);
     console.log(`  Mockups:  ${MOCKUP_DIR}`);
     console.log(`  Storage:  ${STORAGE_DIR}`);
     // Try to open browser

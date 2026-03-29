@@ -108,6 +108,17 @@
     }
     .archive-btn:hover { color: #fbbf24; background: rgba(251,191,36,0.06); border-color: rgba(251,191,36,0.3); }
 
+    /* Save button -- bookmark for later */
+    .save-btn {
+      width: auto; padding: 0 12px; height: 32px; display: flex; align-items: center; justify-content: center;
+      background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2);
+      border-radius: 8px; cursor: pointer; color: #a38a3e; font-size: 12px; font-weight: 500;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .save-btn:hover { color: #fbbf24; background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.4); }
+    .save-btn.is-saved { background: rgba(251,191,36,0.15); border-color: rgba(251,191,36,0.5); color: #fbbf24; }
+    .save-btn.is-saved::before { content: '\2605 '; }
+
     /* Select button -- prominent, primary action */
     .select-btn {
       width: auto; padding: 0 16px; height: 32px; display: flex; align-items: center; justify-content: center;
@@ -135,13 +146,13 @@
     }
     .route-modal {
       background: #0e0e1a; border: 0.5px solid rgba(255,255,255,0.08);
-      border-radius: 12px; padding: 20px; width: 320px;
+      border-radius: 12px; padding: 20px; width: 380px; max-height: 80vh; overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
     .route-modal h3 { font-size: 14px; font-weight: 600; color: #f0f0f5; margin-bottom: 12px; }
     .route-modal-desc { font-size: 11px; color: #5a5a72; margin-bottom: 12px; }
     .route-option {
-      display: block; width: 100%; padding: 8px 12px; margin-bottom: 4px;
+      display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px; margin-bottom: 4px;
       background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.06);
       border-radius: 6px; cursor: pointer; color: #9d9db5; font-size: 13px;
       text-align: left; transition: all 0.12s;
@@ -149,6 +160,21 @@
     .route-option:hover { background: rgba(129,140,248,0.08); color: #f0f0f5; border-color: rgba(129,140,248,0.25); }
     .route-option.taken { color: #5a5a72; }
     .route-option.taken::after { content: ' (replace)'; font-size: 10px; color: #fbbf24; }
+    .route-option-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .route-path { font-size: 10px; color: #5a5a72; font-family: monospace; flex-shrink: 0; }
+    .route-platform {
+      font-size: 9px; color: #818cf8; background: rgba(129,140,248,0.1);
+      padding: 1px 6px; border-radius: 4px; flex-shrink: 0; text-transform: uppercase;
+      letter-spacing: 0.04em; font-weight: 500;
+    }
+    .route-suggested {
+      font-size: 9px; color: #34d399; background: rgba(52,211,153,0.1);
+      padding: 1px 6px; border-radius: 4px; flex-shrink: 0; font-weight: 500;
+    }
+    .route-option.suggested {
+      border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.06);
+      order: -1;
+    }
     .route-divider { height: 0.5px; background: rgba(255,255,255,0.06); margin: 8px 0; }
     .route-custom {
       display: flex; gap: 6px; margin-top: 4px;
@@ -324,6 +350,7 @@
         <div class="review-meta" id="r-meta">-</div>
       </div>
       <span class="position-ct" id="pos-ct"></span>
+      <button class="save-btn" id="save-btn" title="Save for later">Save</button>
       <button class="select-btn" id="select-btn" title="Select this mockup for a page route">Select</button>
       <div class="rating-group" id="page-rating"></div>
       <button class="archive-btn" id="archive-btn" title="Archive this mockup">Archive</button>
@@ -373,10 +400,10 @@ let selectionsData = {}; // from /selections
 let selectedBuild = { pages: {}, components: {} }; // from /selected
 
 // Categorized lists
-let catActive = [], catSelected = [], catArchived = [], catRejected = [];
+let catActive = [], catSelected = [], catArchived = [];
 
 // Sidebar section collapse state
-let sectionCollapsed = { selected: false, rejected: true, archive: true };
+let sectionCollapsed = { selected: false, saved: true, archive: true };
 
 // S.comp[file] = { "ComponentName": { rating, note } }
 // S.customComps[file] = ["ComponentName", ...] -- user-added components
@@ -449,22 +476,22 @@ function relAge(ms) {
 
 // -- Categorize mockups ---------------------------------------------------
 function categorize(mockups, pInfo, iData, sData) {
-  const active = [], archived = [], rejected = [], selected = [];
+  const active = [], archived = [], selected = [];
   const ratingMap = {};
   if (sData.selections) {
     sData.selections.forEach(s => { if (s.rating) ratingMap[s.file] = s.rating; });
   }
 
-  // Build set of selected source files
+  // Build set of selected source files and saved source files
   const selectedFiles = new Set(Object.values(selectedBuild.pages || {}).map(p => p.source));
+  const savedFiles = new Set((selectedBuild.saved || []).map(s => s.source));
 
   for (const m of mockups) {
     if (m.archived) { archived.push(m); continue; }
     if (selectedFiles.has(m.file)) { selected.push(m); continue; }
+    if (savedFiles.has(m.file)) { continue; } // saved items rendered from selectedBuild.saved
 
-    const rating = ratingMap[m.file];
-    if (rating === 'nay') { rejected.push(m); continue; }
-
+    // Yay and nay stay in active — just marked with dot color
     m.isRecent = m.modifiedMs >= (pInfo.lastChange || 0);
     active.push(m);
   }
@@ -477,7 +504,7 @@ function categorize(mockups, pInfo, iData, sData) {
     return (b.modifiedMs || 0) - (a.modifiedMs || 0);
   });
 
-  return { active, selected, archived, rejected };
+  return { active, selected, archived };
 }
 
 // -- Components -----------------------------------------------------------
@@ -601,21 +628,98 @@ async function saveSelected() {
   } catch {}
 }
 
-function showRouteModal(onSelect) {
-  const routes = ['/search', '/newsfeed', '/aitrends', '/graph', '/settings', '/'];
+// Cached detected routes — fetched once from server
+let _detectedRoutes = null;
+
+async function fetchDetectedRoutes() {
+  if (_detectedRoutes) return _detectedRoutes;
+  try {
+    const resp = await fetch('/routes');
+    _detectedRoutes = await resp.json();
+  } catch {
+    _detectedRoutes = { type: 'unknown', routes: [] };
+  }
+  return _detectedRoutes;
+}
+
+// Fuzzy-match mockup filename against detected routes to suggest best match
+function detectBestRoute(mockupFile, routes) {
+  if (!routes || routes.length === 0) return null;
+  // Normalize mockup filename: remove extension, numbers, prefixes, split on separators
+  const baseName = mockupFile
+    .replace(/\.html?$/, '')
+    .replace(/^\d+-/, '')           // strip leading number prefix like "04-"
+    .toLowerCase();
+  const tokens = baseName.split(/[-_\s.]+/).filter(t => t.length > 2);
+
+  let bestRoute = null;
+  let bestScore = 0;
+
+  for (const r of routes) {
+    const target = (r.label + ' ' + r.path).toLowerCase();
+    let score = 0;
+    for (const token of tokens) {
+      if (target.includes(token)) score += token.length;
+    }
+    // Bonus for exact label match
+    if (target.includes(baseName.replace(/[-_]/g, ' '))) score += 10;
+    if (score > bestScore) {
+      bestScore = score;
+      bestRoute = r;
+    }
+  }
+
+  // Only suggest if at least one meaningful token matched (score > 3)
+  return bestScore > 3 ? bestRoute : null;
+}
+
+async function showRouteModal(onSelect, mockupFile) {
+  const detected = await fetchDetectedRoutes();
+  const routes = detected.routes || [];
+  const isSwift = detected.type === 'swift';
+
+  // Auto-detect best matching route for this mockup
+  const suggestedRoute = mockupFile ? detectBestRoute(mockupFile, routes) : null;
+
   const overlay = document.createElement('div');
   overlay.className = 'route-modal-overlay';
+
+  const typeLabel = {
+    'nextjs': 'Next.js App Router',
+    'nextjs-pages': 'Next.js Pages',
+    'swift': 'SwiftUI Views',
+    'python': 'API Routes',
+    'static': 'Static Pages',
+  }[detected.type] || 'Pages';
+
+  const routeButtons = routes.map(r => {
+    const routeKey = r.path;
+    const taken = selectedBuild.pages[routeKey];
+    const isSuggested = suggestedRoute && suggestedRoute.path === routeKey;
+    const platformBadge = isSwift && r.platform && r.platform !== 'shared'
+      ? `<span class="route-platform">${r.platform}</span>`
+      : '';
+    const suggestedBadge = isSuggested ? `<span class="route-suggested">suggested</span>` : '';
+    const displayLabel = r.label || r.path;
+    const displayPath = isSwift ? '' : `<span class="route-path">${r.path}</span>`;
+    return `<button class="route-option${taken?' taken':''}${isSuggested?' suggested':''}" data-route="${routeKey}">
+      <span class="route-option-label">${displayLabel}</span>
+      ${displayPath}${platformBadge}${suggestedBadge}
+    </button>`;
+  }).join('');
+
+  const placeholderText = isSwift ? 'CustomView' : '/custom-route';
+
   overlay.innerHTML = `
     <div class="route-modal">
-      <h3>Select page route</h3>
-      <div class="route-modal-desc">Choose which page this represents, or type a custom route.</div>
-      ${routes.map(r => {
-        const taken = selectedBuild.pages[r];
-        return `<button class="route-option${taken?' taken':''}" data-route="${r}">${r}</button>`;
-      }).join('')}
+      <h3>Select ${isSwift ? 'screen' : 'page'}</h3>
+      <div class="route-modal-desc">${typeLabel} — ${routes.length} detected. Choose one or type a custom name.</div>
+      <div style="display:flex;flex-direction:column;">
+      ${routeButtons || '<div class="route-modal-desc" style="opacity:0.5;">No routes detected — use custom input below.</div>'}
+      </div>
       <div class="route-divider"></div>
       <div class="route-custom">
-        <input type="text" placeholder="/custom-route" id="custom-route-input">
+        <input type="text" placeholder="${placeholderText}" id="custom-route-input">
         <button onclick="document.getElementById('custom-route-input').value && selectRoute(document.getElementById('custom-route-input').value)">Add</button>
       </div>
       <button class="route-modal-cancel" onclick="closeRouteModal()">Cancel</button>
@@ -651,9 +755,10 @@ async function selectRoute(route) {
 
 async function selectCurrentPage() {
   if (M.length === 0) return;
+  const currentFile = M[S.cur].file;
   showRouteModal(async (route) => {
     selectedBuild.pages[route] = {
-      source: M[S.cur].file,
+      source: currentFile,
       selectedAt: new Date().toISOString().split('T')[0],
       note: null
     };
@@ -662,7 +767,33 @@ async function selectCurrentPage() {
     // Scroll sidebar to Selected section
     const selSection = document.getElementById('selected-section');
     if (selSection) selSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  }, currentFile);
+}
+
+// -- Save for Later -------------------------------------------------------
+async function toggleSaveForLater() {
+  if (M.length === 0) return;
+  const file = M[S.cur].file;
+  if (!selectedBuild.saved) selectedBuild.saved = [];
+  const idx = selectedBuild.saved.findIndex(s => s.source === file);
+  if (idx >= 0) {
+    selectedBuild.saved.splice(idx, 1);
+  } else {
+    selectedBuild.saved.push({
+      source: file,
+      savedAt: new Date().toISOString().split('T')[0],
+      note: null
+    });
+  }
+  await saveSelected();
+  render();
+}
+
+async function removeSaved(file) {
+  if (!selectedBuild.saved) return;
+  selectedBuild.saved = selectedBuild.saved.filter(s => s.source !== file);
+  await saveSelected();
+  render();
 }
 
 async function removeSelectedPage(route) {
@@ -673,9 +804,10 @@ async function removeSelectedPage(route) {
 
 async function selectComponent(compName) {
   if (!compName) return;
+  const currentFile = M[S.cur].file;
   showRouteModal(async (route) => {
     selectedBuild.components[compName] = {
-      source: M[S.cur].file,
+      source: currentFile,
       page: route,
       selectedAt: new Date().toISOString().split('T')[0],
       note: null
@@ -684,7 +816,7 @@ async function selectComponent(compName) {
     renderComponents();
     const selSection = document.getElementById('selected-section');
     if (selSection) selSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  }, currentFile);
 }
 
 async function removeSelectedComponent(compName) {
@@ -760,7 +892,6 @@ function render() {
   catActive = cats.active;
   catSelected = cats.selected;
   catArchived = cats.archived;
-  catRejected = cats.rejected;
 
   // Build index map: file -> M index
   const fileIdx = {};
@@ -814,40 +945,43 @@ function render() {
     nh += `</div>`;
   }
 
-  // ACTIVE section (always expanded) -- includes unrated + yay-rated items
+  // ACTIVE section (always expanded) — yay/nay marked with dot color, stay here
   if (catActive.length > 0) {
     nh += `<div class="nav-section"><div class="nav-label">ACTIVE (${catActive.length})</div>`;
     catActive.forEach(x => {
       const idx = fileIdx[x.file];
       const age = relAge(x.modifiedMs);
-      const isSel = selectedSourceFiles.has(x.file);
       nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
         <span class="ni-dot ${dotClass(x.file)}"></span>
         <span class="ni-name">${esc(x.name)}</span>
-        ${isSel ? `<span class="ni-sel-star" title="In Selected Build">&#9679;</span>` : ''}
         ${age ? `<span class="ni-age">${age}</span>` : ''}
       </div>`;
     });
     nh += '</div>';
   }
 
-  // REJECTED section (collapsed by default, red accent)
-  if (catRejected.length > 0) {
+  // SAVED section (bookmarked for later — below active, collapsed by default)
+  const savedItems = (selectedBuild.saved || []).filter(s => {
+    const idx = fileIdx[s.source];
+    return idx !== undefined;
+  });
+  if (savedItems.length > 0) {
     nh += `<div class="nav-section" style="margin-top:12px;padding-top:12px;border-top:0.5px solid rgba(255,255,255,0.04);">
-      <div class="nav-label" style="cursor:pointer;color:#fb7185;opacity:0.7;" onclick="sectionCollapsed.rejected=!sectionCollapsed.rejected;render();">
-        REJECTED (${catRejected.length}) ${sectionCollapsed.rejected !== false ? '&#9662;' : '&#9652;'}
+      <div class="nav-label" style="color:#a38a3e;cursor:pointer;" onclick="sectionCollapsed.saved=!sectionCollapsed.saved;render();">
+        SAVED (${savedItems.length}) ${sectionCollapsed.saved ? '&#9662;' : '&#9652;'}
       </div>`;
-    if (sectionCollapsed.rejected === false) {
-      catRejected.forEach(x => {
-        const idx = fileIdx[x.file];
-        nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})" style="opacity:0.4;">
-          <span class="ni-dot r-nay"></span>
-          <span class="ni-name">${esc(x.name)}</span>
-          <span class="ni-age">${relAge(x.modifiedMs)}</span>
+    if (!sectionCollapsed.saved) {
+      savedItems.forEach(s => {
+        const idx = fileIdx[s.source];
+        const m = M[idx];
+        nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
+          <span class="ni-dot" style="background:#a38a3e;"></span>
+          <span class="ni-name">${esc(m.name)}</span>
+          <span class="ni-age" style="cursor:pointer;color:#fb7185;" onclick="event.stopPropagation();removeSaved('${esc(s.source)}')" title="Remove from saved">&times;</span>
         </div>`;
       });
     }
-    nh += '</div>';
+    nh += `</div>`;
   }
 
   // ARCHIVE section (collapsed by default, muted)
@@ -884,6 +1018,12 @@ function render() {
   pg.innerHTML = ['yay', 'nay'].map(v =>
     `<button class="rate-btn${r === v ? ' on-' + v : ''}" onclick="rate('${esc(m.file)}','${v}')">${{ yay: 'Yay', nay: 'Nay' }[v]}</button>`
   ).join('');
+
+  // Save button state
+  const saveBtn = document.getElementById('save-btn');
+  const isSaved = (selectedBuild.saved || []).some(s => s.source === m.file);
+  saveBtn.className = 'save-btn' + (isSaved ? ' is-saved' : '');
+  saveBtn.textContent = isSaved ? 'Saved' : 'Save';
 
   // Select button state
   const selBtn = document.getElementById('select-btn');
@@ -1064,7 +1204,7 @@ async function init() {
     implData = iData;
     selectionsData = sData;
     if (selBuild && typeof selBuild === 'object') {
-      selectedBuild = { pages: selBuild.pages || {}, components: selBuild.components || {} };
+      selectedBuild = { pages: selBuild.pages || {}, components: selBuild.components || {}, saved: selBuild.saved || [] };
     }
   } catch {
     document.getElementById('sidebar-nav').innerHTML = '<div style="font-size:11px;color:#fb7185;padding:0 8px;">Failed to load mockups. Is the server running?</div>';
@@ -1092,6 +1232,7 @@ document.getElementById('cp-add-btn').addEventListener('click', () => {
   renderComponents();
 });
 
+document.getElementById('save-btn').addEventListener('click', toggleSaveForLater);
 document.getElementById('select-btn').addEventListener('click', selectCurrentPage);
 document.getElementById('archive-btn').addEventListener('click', archiveCurrent);
 document.getElementById('refresh-btn').addEventListener('click', refreshUnrated);
