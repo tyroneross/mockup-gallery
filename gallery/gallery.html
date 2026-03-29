@@ -61,8 +61,14 @@
       flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.03em;
     }
     .ni-impl-new { color: #818cf8; background: rgba(129,140,248,0.1); }
+    .ni-impl-update { color: #fb923c; background: rgba(251,146,60,0.1); }
     .ni-impl-done { color: #34d399; background: rgba(52,211,153,0.1); }
     .ni-impl-partial { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .ni-unselect {
+      font-size: 12px; color: rgba(255,255,255,0.2); cursor: pointer; flex-shrink: 0;
+      padding: 0 2px; transition: color 0.12s;
+    }
+    .ni-unselect:hover { color: #fb7185; }
     .ni-progress { font-size: 9px; color: #5a5a72; flex-shrink: 0; font-family: monospace; }
     .save-status { padding: 0 8px; margin-bottom: 16px; font-size: 10px; color: #5a5a72; text-align: center; }
     .sidebar-footer { margin-top: auto; padding: 12px 8px 0; border-top: 0.5px solid rgba(255,255,255,0.04); }
@@ -930,27 +936,33 @@ function render() {
         SELECTED (${catSelected.length}) ${sectionCollapsed.selected ? '&#9662;' : '&#9652;'}
       </div>`;
     if (!sectionCollapsed.selected) {
-      // Show selected mockups with implementation status
+      // Build set of existing routes for "update vs new" detection
+      const existingRoutes = new Set((_detectedRoutes?.routes || []).map(r => r.path));
+
+      // Show selected mockups with change status + unselect button
       catSelected.forEach(x => {
         const idx = fileIdx[x.file];
         const route = selPageRoutes.find(([, p]) => p.source === x.file);
-        const impl = implData[x.file];
-        let statusBadge = '<span class="ni-impl ni-impl-new" title="Not yet implemented">new</span>';
-        if (impl) {
-          const st = impl.status || 'designed';
-          if (st === 'implemented') {
-            statusBadge = '<span class="ni-impl ni-impl-done" title="Already implemented">done</span>';
-          } else if (st === 'partial') {
-            const total = Object.keys(impl.components || {}).length;
-            const done = Object.values(impl.components || {}).filter(c => c.status === 'implemented').length;
-            statusBadge = `<span class="ni-impl ni-impl-partial" title="${done}/${total} components implemented">${done}/${total}</span>`;
-          }
+        const routePath = route ? route[0] : null;
+
+        // Flag: does this target an existing screen?
+        let statusBadge = '';
+        if (routePath && existingRoutes.has(routePath)) {
+          statusBadge = '<span class="ni-impl ni-impl-update" title="Will update existing screen">update</span>';
+        } else {
+          statusBadge = '<span class="ni-impl ni-impl-new" title="New screen — not yet in app">new</span>';
         }
+
+        const unselectBtn = routePath
+          ? `<span class="ni-unselect" onclick="event.stopPropagation();removeSelectedPage('${esc(routePath)}')" title="Remove from Selected">&times;</span>`
+          : '';
+
         nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
           <span class="ni-dot" style="background:#818cf8;"></span>
           <span class="ni-name">${esc(x.name)}</span>
           ${statusBadge}
-          <span class="ni-page" style="color:#818cf8;">${route ? esc(route[0]) : ''}</span>
+          <span class="ni-page" style="color:#818cf8;">${routePath ? esc(routePath) : ''}</span>
+          ${unselectBtn}
         </div>`;
       });
       // Show component additions grouped by page
@@ -1214,13 +1226,15 @@ async function init() {
 
   // Fetch all data sources in parallel
   try {
-    const [mockups, pInfo, iData, sData, selBuild] = await Promise.all([
+    const [mockups, pInfo, iData, sData, selBuild, detRoutes] = await Promise.all([
       fetch('/mockups').then(r => r.json()),
       fetch('/project-info').then(r => r.json()).catch(() => ({ lastChange: 0, projectName: 'Project' })),
       fetch('/implemented').then(r => r.json()).catch(() => ({})),
       fetch('/selections').then(r => r.json()).catch(() => ({})),
       fetch('/selected').then(r => r.json()).catch(() => ({ pages: {}, components: {} })),
+      fetch('/routes').then(r => r.json()).catch(() => ({ type: 'unknown', routes: [] })),
     ]);
+    _detectedRoutes = detRoutes;
     if (Array.isArray(mockups)) M = mockups;
     projectInfo = pInfo;
     implData = iData;
