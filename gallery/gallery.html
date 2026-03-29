@@ -56,6 +56,13 @@
     .ni-page { font-size: 9px; color: #5a5a72; flex-shrink: 0; }
     .ni-age { font-size: 9px; color: #5a5a72; flex-shrink: 0; white-space: nowrap; }
     .ni-note { font-size: 9px; color: #a38a3e; flex-shrink: 0; cursor: default; }
+    .ni-impl {
+      font-size: 8px; font-weight: 600; padding: 1px 5px; border-radius: 3px;
+      flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .ni-impl-new { color: #818cf8; background: rgba(129,140,248,0.1); }
+    .ni-impl-done { color: #34d399; background: rgba(52,211,153,0.1); }
+    .ni-impl-partial { color: #fbbf24; background: rgba(251,191,36,0.1); }
     .ni-progress { font-size: 9px; color: #5a5a72; flex-shrink: 0; font-family: monospace; }
     .save-status { padding: 0 8px; margin-bottom: 16px; font-size: 10px; color: #5a5a72; text-align: center; }
     .sidebar-footer { margin-top: auto; padding: 12px 8px 0; border-top: 0.5px solid rgba(255,255,255,0.04); }
@@ -613,7 +620,6 @@ function dotClass(f) {
 // -- Archive action -------------------------------------------------------
 async function archiveCurrent() {
   if (M.length === 0) return;
-  if (!confirm('Move "' + M[S.cur].name + '" to archive?')) return;
   await fetch('/archive/' + encodeURIComponent(M[S.cur].file), { method: 'POST' });
   location.reload();
 }
@@ -924,13 +930,26 @@ function render() {
         SELECTED (${catSelected.length}) ${sectionCollapsed.selected ? '&#9662;' : '&#9652;'}
       </div>`;
     if (!sectionCollapsed.selected) {
-      // Show selected mockups as nav items (clickable to preview)
+      // Show selected mockups with implementation status
       catSelected.forEach(x => {
         const idx = fileIdx[x.file];
         const route = selPageRoutes.find(([, p]) => p.source === x.file);
+        const impl = implData[x.file];
+        let statusBadge = '<span class="ni-impl ni-impl-new" title="Not yet implemented">new</span>';
+        if (impl) {
+          const st = impl.status || 'designed';
+          if (st === 'implemented') {
+            statusBadge = '<span class="ni-impl ni-impl-done" title="Already implemented">done</span>';
+          } else if (st === 'partial') {
+            const total = Object.keys(impl.components || {}).length;
+            const done = Object.values(impl.components || {}).filter(c => c.status === 'implemented').length;
+            statusBadge = `<span class="ni-impl ni-impl-partial" title="${done}/${total} components implemented">${done}/${total}</span>`;
+          }
+        }
         nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
           <span class="ni-dot" style="background:#818cf8;"></span>
           <span class="ni-name">${esc(x.name)}</span>
+          ${statusBadge}
           <span class="ni-page" style="color:#818cf8;">${route ? esc(route[0]) : ''}</span>
         </div>`;
       });
