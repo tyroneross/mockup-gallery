@@ -1,7 +1,13 @@
 {
   "name": "mockup-gallery",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Design review gallery for HTML mockups — rate, select, save, track implementation",
+  "commands": {
+    "mockup-feedback": {
+      "description": "Pull latest ratings, comments, and selections from the mockup gallery",
+      "file": "commands/mockup-feedback.md"
+    }
+  },
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -9,6 +15,17 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/check-shared-feedback.mjs\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/check-after-mockup-edit.mjs\""
           }
         ]
       }
