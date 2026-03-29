@@ -167,6 +167,15 @@
     }
     .refresh-btn:hover { color: #9d9db5; border-color: rgba(255,255,255,0.1); }
 
+    .share-btn {
+      width: auto; padding: 0 16px; height: 32px; display: flex; align-items: center; justify-content: center;
+      gap: 6px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+      background: rgba(240,182,94,0.12); color: #f0b65e; border: 1px solid rgba(240,182,94,0.2);
+      transition: all 0.15s;
+    }
+    .share-btn:hover { background: rgba(240,182,94,0.2); border-color: rgba(240,182,94,0.35); }
+    .share-btn.shared { background: rgba(123,198,126,0.12); color: #7bc67e; border-color: rgba(123,198,126,0.2); pointer-events: none; }
+
     /* Route picker modal */
     .route-modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200;
@@ -383,6 +392,7 @@
       <div class="rating-group" id="page-rating"></div>
       <button class="archive-btn" id="archive-btn" title="Archive this mockup">Archive</button>
       <button class="refresh-btn" id="refresh-btn" title="Clear notes on unrated mockups">Refresh</button>
+      <button class="share-btn" id="share-btn" title="Share ratings and feedback with Claude Code">Share with Claude</button>
     </div>
 
     <div class="preview-split">
@@ -1407,6 +1417,21 @@ document.getElementById('save-btn').addEventListener('click', toggleSaveForLater
 document.getElementById('select-btn').addEventListener('click', selectCurrentPage);
 document.getElementById('archive-btn').addEventListener('click', archiveCurrent);
 document.getElementById('refresh-btn').addEventListener('click', refreshUnrated);
+document.getElementById('share-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('share-btn');
+  try {
+    const res = await fetch('/share-with-claude', { method: 'POST' });
+    if (!res.ok) throw new Error('Failed');
+    btn.textContent = 'Shared \u2713';
+    btn.classList.add('shared');
+    setTimeout(() => {
+      btn.textContent = 'Share with Claude';
+      btn.classList.remove('shared');
+    }, 3000);
+  } catch (e) {
+    alert('Failed to share with Claude. Is the gallery server running?');
+  }
+});
 
 document.addEventListener('keydown', function (e) {
   if (e.target.tagName === 'INPUT') return;

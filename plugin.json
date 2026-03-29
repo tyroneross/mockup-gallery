@@ -3,6 +3,16 @@
   "version": "0.2.0",
   "description": "Design review gallery for HTML mockups — rate, select, save, track implementation",
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/check-shared-feedback.mjs\""
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "startup|resume",

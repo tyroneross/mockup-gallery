@@ -163,7 +163,52 @@ function detectProjectRoutes(root) {
     return result;
   }
 
-  // 5. Static / SPA — scan for HTML files
+  // 5. Manual route manifest — .mockup-gallery/routes.json
+  const manifestPath = path.join(root, '.mockup-gallery', 'routes.json');
+  if (fs.existsSync(manifestPath)) {
+    try {
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+      if (Array.isArray(manifest.routes) && manifest.routes.length > 0) {
+        result.type = manifest.type || 'custom';
+        result.routes = manifest.routes;
+        return result;
+      }
+    } catch { /* ignore parse errors */ }
+  }
+
+  // 6. Wouter / React Router SPA — scan for Route components in source
+  for (const routerFile of [
+    'client/src/App.tsx', 'client/src/App.jsx', 'src/App.tsx', 'src/App.jsx',
+    'src/router.tsx', 'src/routes.tsx', 'app/routes.tsx',
+  ]) {
+    const filePath = path.join(root, routerFile);
+    if (fs.existsSync(filePath)) {
+      try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        // Match <Route path="..." /> patterns (wouter, react-router, etc.)
+        const routeMatches = content.matchAll(/<Route\s+[^>]*path=["']([^"']+)["']/g);
+        const routes = [];
+        for (const m of routeMatches) {
+          const routePath = m[1];
+          // Skip dynamic params and redirects
+          if (routePath.includes(':') && !routePath.includes('/')) continue;
+          const label = routePath === '/'
+            ? 'Home'
+            : routePath.split('/').filter(Boolean)[0]
+                .replace(/[-_]/g, ' ')
+                .replace(/\b\w/g, c => c.toUpperCase());
+          routes.push({ path: routePath, label, source: routerFile });
+        }
+        if (routes.length > 0) {
+          result.type = 'spa';
+          result.routes = routes;
+          return result;
+        }
+      } catch { /* ignore read errors */ }
+    }
+  }
+
+  // 7. Static / SPA — scan for HTML files
   for (const dir of ['public', 'dist', 'build', 'static']) {
     const d = path.join(root, dir);
     if (fs.existsSync(d)) {
@@ -539,6 +584,67 @@ function handler(req, res) {
   if (req.method === 'GET' && pathname === '/routes') {
     const detected = detectProjectRoutes(PROJECT_ROOT);
     return json(res, detected);
+  }
+
+  // POST /share-with-claude — build pending-review.json from selections + selected
+  if (req.method === 'POST' && pathname === '/share-with-claude') {
+    try {
+      const selections = readJsonFile(path.join(STORAGE_DIR, 'selections.json')) || {};
+      const selected   = readJsonFile(path.join(STORAGE_DIR, 'selected.json'))   || {};
+
+      // Build ratings array from selections.selections array
+      const ratings = [];
+      const items = Array.isArray(selections.selections) ? selections.selections : [];
+      for (const item of items) {
+        const entry = { mockup: (item.file || item.name || '').replace(/\.html$/, ''), rating: item.rating || 'unrated' };
+        entry.note = item.note || null;
+        // Gather component-level comments (names that look like feedback + notes)
+        const comments = [];
+        for (const comp of (item.components || [])) {
+          if (comp.name && comp.name.length > 30 && /[.!,]|should|remove|add|change|simplify|move|fix|need|don't|instead/i.test(comp.name)) {
+            comments.push(comp.name.trim());
+          }
+          if (comp.note && typeof comp.note === 'string' && comp.note.trim()) {
+            comments.push(comp.note.trim());
+          }
+        }
+        if (comments.length > 0) entry.comments = comments;
+        ratings.push(entry);
+      }
+
+      // Build selections map from selected.json pages
+      const selectionMap = {};
+      if (selected.pages) {
+        for (const [route, info] of Object.entries(selected.pages)) {
+          selectionMap[route] = { mockup: info.source || null, note: info.note || null };
+        }
+      }
+
+      // Summary counts
+      const yayCount      = ratings.filter(r => r.rating === 'yay').length;
+      const nayCount      = ratings.filter(r => r.rating === 'nay').length;
+      const unratedCount  = ratings.filter(r => r.rating === 'unrated').length;
+      const pageCount     = Object.keys(selectionMap).length;
+      const commentCount  = ratings.reduce((n, r) => n + (r.comments ? r.comments.length : 0), 0);
+
+      let projectName = path.basename(PROJECT_ROOT);
+      try { const pkg = readJsonFile(path.join(PROJECT_ROOT, 'package.json')); if (pkg?.name) projectName = pkg.name; } catch {}
+
+      const review = {
+        sharedAt: new Date().toISOString(),
+        project: projectName,
+        ratings,
+        selections: selectionMap,
+        summary: `${ratings.length} rated (${yayCount} yay, ${nayCount} nay, ${unratedCount} unrated), ${pageCount} page${pageCount !== 1 ? 's' : ''} selected, ${commentCount} comment${commentCount !== 1 ? 's' : ''}`,
+      };
+
+      const dest = path.join(STORAGE_DIR, 'pending-review.json');
+      fs.writeFileSync(dest, JSON.stringify(review, null, 2), 'utf8');
+      console.log(`[share-with-claude] wrote ${dest}`);
+      return json(res, { ok: true, file: 'pending-review.json' });
+    } catch (e) {
+      return json(res, { error: e.message }, 500);
+    }
   }
 
   // Static files from gallery dir (CSS, JS, etc.)
