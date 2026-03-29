@@ -55,6 +55,7 @@
     .ni-name { font-size: 12px; color: #9d9db5; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ni-page { font-size: 9px; color: #5a5a72; flex-shrink: 0; }
     .ni-age { font-size: 9px; color: #5a5a72; flex-shrink: 0; white-space: nowrap; }
+    .ni-note { font-size: 9px; color: #a38a3e; flex-shrink: 0; cursor: default; }
     .ni-progress { font-size: 9px; color: #5a5a72; flex-shrink: 0; font-family: monospace; }
     .save-status { padding: 0 8px; margin-bottom: 16px; font-size: 10px; color: #5a5a72; text-align: center; }
     .sidebar-footer { margin-top: auto; padding: 12px 8px 0; border-top: 0.5px solid rgba(255,255,255,0.04); }
@@ -951,9 +952,11 @@ function render() {
     catActive.forEach(x => {
       const idx = fileIdx[x.file];
       const age = relAge(x.modifiedMs);
+      const hasNote = S.notes[x.file];
       nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
         <span class="ni-dot ${dotClass(x.file)}"></span>
         <span class="ni-name">${esc(x.name)}</span>
+        ${hasNote ? `<span class="ni-note" title="${esc(hasNote)}">&#9998;</span>` : ''}
         ${age ? `<span class="ni-age">${age}</span>` : ''}
       </div>`;
     });
