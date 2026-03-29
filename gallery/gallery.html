@@ -69,6 +69,20 @@
       padding: 0 2px; transition: color 0.12s;
     }
     .ni-unselect:hover { color: #fb7185; }
+    .ni-done-btn {
+      font-size: 11px; color: rgba(255,255,255,0.2); cursor: pointer; flex-shrink: 0;
+      padding: 0 2px; transition: color 0.12s;
+    }
+    .ni-done-btn:hover { color: #34d399; }
+    .nav-item.sel-pending {
+      border-left: 2px solid #fb923c;
+      padding-left: 6px;
+      background: rgba(251,146,60,0.04);
+    }
+    .sel-change-note {
+      padding: 2px 8px 4px 24px; font-size: 10px; color: #a38a3e;
+      cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .ni-progress { font-size: 9px; color: #5a5a72; flex-shrink: 0; font-family: monospace; }
     .save-status { padding: 0 8px; margin-bottom: 16px; font-size: 10px; color: #5a5a72; text-align: center; }
     .sidebar-footer { margin-top: auto; padding: 12px 8px 0; border-top: 0.5px solid rgba(255,255,255,0.04); }
@@ -770,17 +784,82 @@ async function selectCurrentPage() {
   if (M.length === 0) return;
   const currentFile = M[S.cur].file;
   showRouteModal(async (route) => {
-    selectedBuild.pages[route] = {
-      source: currentFile,
-      selectedAt: new Date().toISOString().split('T')[0],
-      note: null
-    };
-    await saveSelected();
-    render();
-    // Scroll sidebar to Selected section
-    const selSection = document.getElementById('selected-section');
-    if (selSection) selSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Check if this targets an existing screen
+    const existingRoutes = new Set((_detectedRoutes?.routes || []).map(r => r.path));
+    const isUpdate = existingRoutes.has(route);
+
+    // Show change note prompt
+    showChangeNoteModal(isUpdate, currentFile, async (changeNote) => {
+      selectedBuild.pages[route] = {
+        source: currentFile,
+        selectedAt: new Date().toISOString().split('T')[0],
+        note: null,
+        changeNote: changeNote || null,
+        status: null  // null = pending, 'done' = implemented
+      };
+      await saveSelected();
+      render();
+      const selSection = document.getElementById('selected-section');
+      if (selSection) selSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }, currentFile);
+}
+
+function showChangeNoteModal(isUpdate, mockupFile, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'route-modal-overlay';
+  overlay.id = 'change-note-overlay';
+
+  const title = isUpdate ? 'What should change?' : 'What does this add?';
+  const placeholder = isUpdate
+    ? 'e.g., Replace the header cards with the new gradient style from this mockup. Keep the existing chart section unchanged.'
+    : 'e.g., New onboarding flow — 3 screens with progress indicator.';
+  const hint = isUpdate
+    ? 'Describe specifically what parts of the existing screen to update. Unchanged parts will be left alone.'
+    : 'Describe what this new screen adds. This helps the coding agent build exactly what you want.';
+
+  overlay.innerHTML = `
+    <div class="route-modal" style="width:440px;">
+      <h3>${title}</h3>
+      <div class="route-modal-desc">${hint}</div>
+      <textarea id="change-note-input" rows="4" placeholder="${placeholder}"
+        style="width:100%;background:rgba(255,255,255,0.03);border:0.5px solid rgba(255,255,255,0.1);
+        border-radius:6px;padding:10px;color:#f0f0f5;font-size:12px;font-family:inherit;
+        resize:vertical;outline:none;margin-bottom:8px;"
+      ></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="route-modal-cancel" style="flex:0;" onclick="document.getElementById('change-note-overlay').remove()">Skip</button>
+        <button class="select-btn" id="change-note-confirm" style="flex:0;">Confirm</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+  const confirmBtn = document.getElementById('change-note-confirm');
+  const input = document.getElementById('change-note-input');
+  input.focus();
+
+  confirmBtn.addEventListener('click', () => {
+    const note = input.value.trim();
+    overlay.remove();
+    onConfirm(note);
+  });
+
+  // Skip = confirm with empty note
+  overlay.querySelector('.route-modal-cancel').addEventListener('click', () => {
+    overlay.remove();
+    onConfirm('');
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.metaKey) {
+      const note = input.value.trim();
+      overlay.remove();
+      onConfirm(note);
+    }
+    if (e.key === 'Escape') { overlay.remove(); onConfirm(''); }
+  });
 }
 
 // -- Save for Later -------------------------------------------------------
@@ -807,6 +886,24 @@ async function removeSaved(file) {
   selectedBuild.saved = selectedBuild.saved.filter(s => s.source !== file);
   await saveSelected();
   render();
+}
+
+async function markSelectedDone(route) {
+  if (selectedBuild.pages[route]) {
+    selectedBuild.pages[route].status = selectedBuild.pages[route].status === 'done' ? null : 'done';
+    await saveSelected();
+    render();
+  }
+}
+
+async function editChangeNote(route) {
+  const current = selectedBuild.pages[route]?.changeNote || '';
+  const note = prompt('Change description (what to update/build):', current);
+  if (note !== null && selectedBuild.pages[route]) {
+    selectedBuild.pages[route].changeNote = note.trim() || null;
+    await saveSelected();
+    render();
+  }
 }
 
 async function removeSelectedPage(route) {
@@ -931,39 +1028,77 @@ function render() {
   });
 
   if (selPageRoutes.length > 0 || Object.keys(selCompsByPage).length > 0) {
+    // Build set of existing routes for "update vs new" detection
+    const existingRoutes = new Set((_detectedRoutes?.routes || []).map(r => r.path));
+
+    // Count pending changes
+    const pendingCount = catSelected.filter(x => {
+      const route = selPageRoutes.find(([, p]) => p.source === x.file);
+      const routePath = route ? route[0] : null;
+      const pageData = routePath ? selectedBuild.pages[routePath] : null;
+      return !(pageData && pageData.status === 'done');
+    }).length;
+
+    const pendingLabel = pendingCount > 0 ? ` \u00B7 <span style="color:#fb923c;">${pendingCount} pending</span>` : '';
+
     nh += `<div class="selected-section" id="selected-section">
       <div class="nav-label" style="color:#818cf8;cursor:pointer;" onclick="sectionCollapsed.selected=!sectionCollapsed.selected;render();">
-        SELECTED (${catSelected.length}) ${sectionCollapsed.selected ? '&#9662;' : '&#9652;'}
+        SELECTED (${catSelected.length})${pendingLabel} ${sectionCollapsed.selected ? '&#9662;' : '&#9652;'}
       </div>`;
     if (!sectionCollapsed.selected) {
-      // Build set of existing routes for "update vs new" detection
-      const existingRoutes = new Set((_detectedRoutes?.routes || []).map(r => r.path));
-
-      // Show selected mockups with change status + unselect button
+      // Show selected mockups — pending changes highlighted
       catSelected.forEach(x => {
         const idx = fileIdx[x.file];
         const route = selPageRoutes.find(([, p]) => p.source === x.file);
         const routePath = route ? route[0] : null;
+        const pageData = routePath ? selectedBuild.pages[routePath] : null;
+        const isDone = pageData && pageData.status === 'done';
+        const changeNote = pageData ? pageData.changeNote || '' : '';
+        const isUpdate = routePath && existingRoutes.has(routePath);
 
-        // Flag: does this target an existing screen?
         let statusBadge = '';
-        if (routePath && existingRoutes.has(routePath)) {
-          statusBadge = '<span class="ni-impl ni-impl-update" title="Will update existing screen">update</span>';
+        if (isDone) {
+          statusBadge = '<span class="ni-impl ni-impl-done" title="Implemented">done</span>';
+        } else if (isUpdate) {
+          statusBadge = '<span class="ni-impl ni-impl-update" title="Will update existing screen — pending">update</span>';
         } else {
-          statusBadge = '<span class="ni-impl ni-impl-new" title="New screen — not yet in app">new</span>';
+          statusBadge = '<span class="ni-impl ni-impl-new" title="New screen to build — pending">new</span>';
         }
 
+        const doneBtn = routePath && !isDone
+          ? `<span class="ni-done-btn" onclick="event.stopPropagation();markSelectedDone('${esc(routePath)}')" title="Mark as implemented">\u2713</span>`
+          : '';
         const unselectBtn = routePath
           ? `<span class="ni-unselect" onclick="event.stopPropagation();removeSelectedPage('${esc(routePath)}')" title="Remove from Selected">&times;</span>`
           : '';
 
-        nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
-          <span class="ni-dot" style="background:#818cf8;"></span>
+        // Pending items get accent left border
+        const pendingClass = isDone ? '' : ' sel-pending';
+
+        nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}${pendingClass}" onclick="go(${idx})">
+          <span class="ni-dot" style="background:${isDone ? '#34d399' : '#818cf8'};"></span>
           <span class="ni-name">${esc(x.name)}</span>
           ${statusBadge}
           <span class="ni-page" style="color:#818cf8;">${routePath ? esc(routePath) : ''}</span>
-          ${unselectBtn}
+          ${doneBtn}${unselectBtn}
         </div>`;
+        // Show change note + actions for pending items
+        if (!isDone && routePath) {
+          if (changeNote) {
+            nh += `<div class="sel-change-note" onclick="editChangeNote('${esc(routePath)}')" title="${esc(changeNote)}">
+              \u270E ${esc(changeNote.length > 60 ? changeNote.slice(0, 57) + '...' : changeNote)}
+            </div>`;
+          } else {
+            nh += `<div class="sel-change-note" onclick="editChangeNote('${esc(routePath)}')" style="color:#5a5a72;font-style:italic;">
+              + add change description
+            </div>`;
+          }
+        }
+        if (isDone && routePath) {
+          nh += `<div class="sel-change-note" style="color:#34d399;" onclick="markSelectedDone('${esc(routePath)}')">
+            \u2713 implemented — click to reopen
+          </div>`;
+        }
       });
       // Show component additions grouped by page
       Object.entries(selCompsByPage).forEach(([pg, comps]) => {

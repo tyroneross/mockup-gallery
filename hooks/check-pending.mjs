@@ -32,7 +32,7 @@ if (selections?.selections) {
   }
   lines.push(`  ${counts.yay} approved, ${counts.nay} rejected, ${counts.unrated} unrated`);
 
-  // Collect all comments: notes + component-level feedback
+  // Collect feedback comments
   const comments = [];
   for (const item of items) {
     const name = item.file.replace('.html', '');
@@ -40,7 +40,6 @@ if (selections?.selections) {
       comments.push({ mockup: name, comment: item.note });
     }
     for (const comp of (item.components || [])) {
-      // Component names that look like feedback (sentence-like, contains spaces + verbs/punctuation)
       if (comp.name && comp.name.length > 30 && /[.!,]|should|remove|add|change|simplify|move|fix|need|don't|instead/i.test(comp.name)) {
         comments.push({ mockup: name, comment: comp.name });
       }
@@ -59,34 +58,57 @@ if (selections?.selections) {
   }
 }
 
-// Selected build summary
+// Selected build — split into pending vs done
 if (selected) {
-  const pageCount = Object.keys(selected.pages || {}).length;
-  const compCount = Object.keys(selected.components || {}).length;
+  const pages = Object.entries(selected.pages || {});
+  const pending = pages.filter(([, d]) => d.status !== 'done');
+  const done = pages.filter(([, d]) => d.status === 'done');
   const savedCount = (selected.saved || []).length;
-  if (pageCount > 0 || compCount > 0 || savedCount > 0) {
+
+  if (pages.length > 0 || savedCount > 0) {
     const parts = [];
-    if (pageCount > 0) parts.push(`${pageCount} pages selected`);
-    if (compCount > 0) parts.push(`${compCount} components`);
+    if (pending.length > 0) parts.push(`${pending.length} pending`);
+    if (done.length > 0) parts.push(`${done.length} done`);
     if (savedCount > 0) parts.push(`${savedCount} saved for later`);
     lines.push(`  Selected build: ${parts.join(', ')}`);
+  }
 
-    // Show page assignments
-    for (const [route, data] of Object.entries(selected.pages || {})) {
-      lines.push(`    ${route} ← ${data.source}`);
+  // PENDING CHANGES — this is what Claude Code should focus on
+  if (pending.length > 0) {
+    lines.push('');
+    lines.push('  PENDING DESIGN CHANGES (implement these):');
+    for (const [route, data] of pending) {
+      lines.push(`    ${route} ← mockup: ${data.source}`);
+      if (data.changeNote) {
+        lines.push(`      Change: ${data.changeNote}`);
+      } else {
+        lines.push(`      Change: (no description — open gallery to add one)`);
+      }
+      lines.push(`      Mockup file: mockups/${data.source}`);
     }
+    lines.push('');
+    lines.push('  When implementing pending changes:');
+    lines.push('  - Read the mockup HTML file to understand the target design');
+    lines.push('  - If a change description exists, ONLY modify those specific aspects');
+    lines.push('  - Do NOT restructure or restyle parts of the UI not mentioned in the change description');
+    lines.push('  - Compare the mockup against the current implementation to identify deltas');
+  }
+
+  // Done items — just list for reference
+  if (done.length > 0) {
+    lines.push(`  Implemented: ${done.map(([route]) => route).join(', ')}`);
   }
 }
 
-// Implementation tracking
+// Implementation tracking from implemented.json
 const implCount = Object.keys(implemented).length;
 if (implCount > 0) {
   const implSummary = Object.entries(implemented).map(([file, data]) => {
     const total = Object.keys(data.components || {}).length;
-    const done = Object.values(data.components || {}).filter(c => c.status === 'implemented').length;
-    return `${file.replace('.html', '')} [${done}/${total}]`;
+    const doneCount = Object.values(data.components || {}).filter(c => c.status === 'implemented').length;
+    return `${file.replace('.html', '')} [${doneCount}/${total}]`;
   }).join(', ');
-  lines.push(`  Implemented: ${implSummary}`);
+  lines.push(`  Component tracking: ${implSummary}`);
 }
 
 if (accepted?.design_patterns?.approved) {
