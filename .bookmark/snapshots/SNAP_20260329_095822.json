@@ -1,0 +1,34 @@
+{
+  "snapshot_id": "SNAP_20260329_095822",
+  "timestamp": 1774803502502,
+  "session_id": "da4059fd-8a9b-489f-b821-4d03a3136279",
+  "project_path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery",
+  "trigger": "session_end",
+  "compaction_cycle": 0,
+  "files_changed": [
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/server/gallery-server.mjs",
+      "operations": [
+        "edit"
+      ],
+      "lines_changed": 47
+    }
+  ],
+  "tools_summary": {
+    "Skill": 4,
+    "Read": 15,
+    "Bash": 67,
+    "ToolSearch": 6,
+    "mcp__claude_ai_Vercel__list_teams": 1,
+    "mcp__claude_ai_Vercel__list_projects": 1,
+    "Agent": 30,
+    "Write": 11,
+    "ExitPlanMode": 5,
+    "TaskCreate": 19,
+    "TaskUpdate": 35,
+    "Edit": 3,
+    "AskUserQuestion": 5,
+    "Grep": 4
+  },
+  "prior_snapshot_id": "SNAP_20260329_095407"
+}

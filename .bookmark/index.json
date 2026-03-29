@@ -1,15 +1,155 @@
 {
   "version": "1.0.0",
   "project_path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery",
-  "last_updated": 1774603946757,
+  "last_updated": 1774813868914,
   "stats": {
-    "total_snapshots": 24,
+    "total_snapshots": 44,
     "compaction_cycles": 0,
     "last_compaction": 0,
-    "last_snapshot": 1774603946756,
-    "last_time_based": 1774603946756
+    "last_snapshot": 1774813868914,
+    "last_time_based": 1774812888051
   },
   "snapshots": [
+    {
+      "id": "SNAP_20260329_125108",
+      "timestamp": 1774813868914,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 10
+    },
+    {
+      "id": "SNAP_20260329_123842",
+      "timestamp": 1774813122041,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 10
+    },
+    {
+      "id": "SNAP_20260329_123522",
+      "timestamp": 1774812922115,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 10
+    },
+    {
+      "id": "SNAP_20260329_123448",
+      "timestamp": 1774812888051,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 10
+    },
+    {
+      "id": "SNAP_20260329_120056",
+      "timestamp": 1774810856344,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 5
+    },
+    {
+      "id": "SNAP_20260329_115530",
+      "timestamp": 1774810530995,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 2
+    },
+    {
+      "id": "SNAP_20260329_100624",
+      "timestamp": 1774803984485,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 2
+    },
+    {
+      "id": "SNAP_20260329_095950",
+      "timestamp": 1774803590652,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 1
+    },
+    {
+      "id": "SNAP_20260329_095822",
+      "timestamp": 1774803502502,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 1
+    },
+    {
+      "id": "SNAP_20260329_095407",
+      "timestamp": 1774803247170,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 1
+    },
+    {
+      "id": "SNAP_20260329_095308",
+      "timestamp": 1774803188293,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 1
+    },
+    {
+      "id": "SNAP_20260329_002057",
+      "timestamp": 1774768857087,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 6
+    },
+    {
+      "id": "SNAP_20260329_001143",
+      "timestamp": 1774768303344,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 6
+    },
+    {
+      "id": "SNAP_20260329_000715",
+      "timestamp": 1774768035203,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 6
+    },
+    {
+      "id": "SNAP_20260328_235952",
+      "timestamp": 1774767592515,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 6
+    },
+    {
+      "id": "SNAP_20260328_234924",
+      "timestamp": 1774766964944,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 6
+    },
+    {
+      "id": "SNAP_20260328_233933",
+      "timestamp": 1774766373077,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 5
+    },
+    {
+      "id": "SNAP_20260327_042701",
+      "timestamp": 1774610821949,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 10
+    },
+    {
+      "id": "SNAP_20260327_024652",
+      "timestamp": 1774604812361,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 10
+    },
+    {
+      "id": "SNAP_20260327_023722",
+      "timestamp": 1774604242111,
+      "trigger": "session_end",
+      "compaction_cycle": 0,
+      "files_changed_count": 10
+    },
     {
       "id": "SNAP_20260327_023226",
       "timestamp": 1774603946756,

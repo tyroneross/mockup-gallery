@@ -1,0 +1,62 @@
+{
+  "snapshot_id": "SNAP_20260328_233933",
+  "timestamp": 1774766373077,
+  "session_id": "3eeafa49-34fe-41c9-bc26-02475a1603df",
+  "project_path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery",
+  "trigger": "session_end",
+  "compaction_cycle": 0,
+  "files_changed": [
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/server/gallery-server.mjs",
+      "operations": [
+        "edit"
+      ],
+      "lines_changed": 231,
+      "summary": "+fn detectProjectRoutes, +fn scanNextRoutes, +fn scanPagesRouter, +fn scanSwiftViews"
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/gallery/gallery.html",
+      "operations": [
+        "edit"
+      ],
+      "lines_changed": 384,
+      "summary": "+fn fetchDetectedRoutes, +fn showRouteModal, +fn toggleSaveForLater, +fn removeSaved"
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/README.md",
+      "operations": [
+        "write"
+      ],
+      "lines_changed": 106
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/package.json",
+      "operations": [
+        "write"
+      ],
+      "lines_changed": 18
+    },
+    {
+      "path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery/plugin.json",
+      "operations": [
+        "write"
+      ],
+      "lines_changed": 19
+    }
+  ],
+  "tools_summary": {
+    "Read": 34,
+    "Bash": 40,
+    "Agent": 6,
+    "ToolSearch": 3,
+    "Write": 5,
+    "ExitPlanMode": 2,
+    "AskUserQuestion": 1,
+    "Edit": 30,
+    "Skill": 1,
+    "TaskCreate": 3,
+    "TaskUpdate": 6,
+    "Grep": 9
+  },
+  "prior_snapshot_id": "SNAP_20260327_042701"
+}
