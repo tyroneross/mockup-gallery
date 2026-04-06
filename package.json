@@ -10,7 +10,7 @@
     "start": "node server/gallery-server.mjs"
   },
   "keywords": ["mockup", "design", "review", "gallery", "claude-code", "plugin"],
-  "license": "MIT",
+  "license": "FSL-1.1-MIT",
   "engines": {
     "node": ">=18"
   }
