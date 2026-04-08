@@ -1,6 +1,6 @@
 {
   "name": "mockup-gallery",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Design review gallery for HTML mockups — rate, select, save, track implementation",
   "commands": {
     "mockup-feedback": {
