@@ -224,8 +224,9 @@ Codex reads AGENTS.md at repo root. It interacts with `.mockup-gallery/` via dir
 - Review history stays local/ephemeral
 - No auto-promotion of memories
 
-## Open Questions
+## Resolved Decisions
 
-- How should the sync check handle COMMON.md updates — should it suggest patches to both platform docs, or just flag the drift?
-- Should registry.json be committed to git or gitignored? (Paths are machine-specific, but project names are useful to track.)
-- Should memories be committed to git? (Design preferences feel version-worthy; implementation lessons may be more ephemeral.)
+- **Sync check output:** Suggests patches to both CLAUDE.md and AGENTS.md when drift is detected.
+- **registry.json:** Gitignored. Paths are machine-specific. Auto-populated at runtime.
+- **memories/global/:** Git-tracked in the mockup-gallery plugin repo. Design preferences and implementation lessons are version-worthy.
+- **memories/projects/<name>/:** Git-tracked in the mockup-gallery plugin repo. Per-project memories specific to each registered project.
