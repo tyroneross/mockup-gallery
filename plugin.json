@@ -10,6 +10,10 @@
     "mockup-memories": {
       "description": "Show global and project-specific design memories, or promote learnings",
       "file": "commands/mockup-memories.md"
+    },
+    "mockup-gallery:sync": {
+      "description": "Check alignment between COMMON.md, CLAUDE.md, and AGENTS.md",
+      "file": "commands/mockup-sync.md"
     }
   },
   "hooks": {
