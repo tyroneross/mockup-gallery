@@ -1,11 +1,57 @@
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync, readdirSync } from 'fs';
 import { join } from 'path';
+
+// ── Registry auto-registration ──────────────────────────────────────────
+function registerProject(pluginRoot, projectPath) {
+  if (!pluginRoot) return;
+  const registryPath = join(pluginRoot, 'registry.json');
+  let registry = { projects: {} };
+  try { registry = JSON.parse(readFileSync(registryPath, 'utf8')); } catch { /* new registry */ }
+  const name = projectPath.split('/').pop();
+  registry.projects[name] = {
+    path: projectPath,
+    lastSeen: new Date().toISOString()
+  };
+  try {
+    writeFileSync(registryPath, JSON.stringify(registry, null, 2));
+  } catch { /* silent — registry is optional */ }
+}
+
+// ── Global memory reader ────────────────────────────────────────────────
+function readGlobalMemories(pluginRoot, projectName) {
+  if (!pluginRoot) return [];
+  const memLines = [];
+  const globalDir = join(pluginRoot, 'memories', 'global');
+  const projectDir = join(pluginRoot, 'memories', 'projects', projectName);
+
+  for (const dir of [globalDir, projectDir]) {
+    if (!existsSync(dir)) continue;
+    try {
+      const files = readdirSync(dir).filter(f => f.endsWith('.md'));
+      for (const file of files) {
+        const content = readFileSync(join(dir, file), 'utf8').trim();
+        // Skip files that only have the starter template
+        if (content.includes('<!-- Add entries as they are promoted')) continue;
+        const label = dir === globalDir ? 'Global' : `Project (${projectName})`;
+        memLines.push(`  ${label}: ${file.replace('.md', '').replace(/-/g, ' ')}`);
+      }
+    } catch { /* silent */ }
+  }
+  return memLines;
+}
 
 const storageDir = join(process.cwd(), '.mockup-gallery');
 const selectionsPath = join(storageDir, 'selections.json');
 const selectedPath = join(storageDir, 'selected.json');
 const implementedPath = join(storageDir, 'implemented.json');
 const acceptedPath = join(storageDir, 'accepted-designs.json');
+
+const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT || null;
+const projectPath = process.cwd();
+const projectName = projectPath.split('/').pop();
+
+// Auto-register this project (silent)
+registerProject(pluginRoot, projectPath);
 
 function readJson(p) {
   try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return null; }
@@ -113,6 +159,13 @@ if (implCount > 0) {
 
 if (accepted?.design_patterns?.approved) {
   lines.push(`  ${accepted.design_patterns.approved.length} approved design patterns available`);
+}
+
+// Surface global memories if any have content
+const memLines = readGlobalMemories(pluginRoot, projectName);
+if (memLines.length > 0) {
+  lines.push('  Design memories:');
+  lines.push(...memLines);
 }
 
 process.stdout.write(lines.join('\n') + '\n');
