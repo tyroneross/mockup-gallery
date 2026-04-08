@@ -6,6 +6,10 @@
     "mockup-feedback": {
       "description": "Pull latest ratings, comments, and selections from the mockup gallery",
       "file": "commands/mockup-feedback.md"
+    },
+    "mockup-memories": {
+      "description": "Show global and project-specific design memories, or promote learnings",
+      "file": "commands/mockup-memories.md"
     }
   },
   "hooks": {
