@@ -12,5 +12,14 @@ node_modules/
 /.mockup-gallery/
 /.atomize-gallery/
 
+# Explicit un-ignore for test fixtures. Required because user's global
+# gitignore (~/.config/git/ignore) may have an unanchored .mockup-gallery/
+# pattern that would otherwise catch these legitimate fixture files. The
+# leading `!` overrides the global ignore.
+!test/fixtures/**/.mockup-gallery/
+!test/fixtures/**/.mockup-gallery/**
+!test/fixtures/**/mockups/
+!test/fixtures/**/mockups/**
+
 # Build-loop scratch directories (self-test workspaces)
 /.build-loop/tmp/
