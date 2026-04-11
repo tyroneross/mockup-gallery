@@ -1,0 +1,28 @@
+{
+  "name": "mockup-gallery",
+  "owner": {
+    "name": "Tyrone Ross",
+    "url": "https://github.com/tyroneross"
+  },
+  "metadata": {
+    "description": "Design review gallery for HTML mockups — rate, select, save, track implementation",
+    "version": "0.4.0"
+  },
+  "plugins": [
+    {
+      "name": "mockup-gallery",
+      "source": "./",
+      "description": "Visual mockup review gallery with component-level ratings, auto-save to file, and Claude Code integration.",
+      "version": "0.4.0",
+      "author": {
+        "name": "Tyrone Ross"
+      },
+      "category": "design",
+      "tags": [
+        "design-review",
+        "mockups",
+        "ui"
+      ]
+    }
+  ]
+}

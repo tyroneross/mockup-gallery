@@ -16,6 +16,19 @@ function flag(name) {
 }
 
 const PROJECT_ROOT = path.resolve(flag('--project') || process.cwd());
+
+// Self-guard: refuse to run against the plugin's own repo. The plugin ships with
+// its own commands/, hooks/, and potentially a stray mockups/ dir, and auto-scan
+// would happily treat this repo as a target project and write .mockup-gallery/
+// state into it. Require an explicit target via --project or launch from the
+// app's directory.
+const PLUGIN_ROOT = path.resolve(__dirname, '..');
+if (PROJECT_ROOT === PLUGIN_ROOT) {
+  console.error('Refusing to run mockup-gallery against its own repo at ' + PLUGIN_ROOT + '.');
+  console.error('Pass --project <target-app-path> or launch from your app\'s directory.');
+  process.exit(1);
+}
+
 let MOCKUP_DIR = flag('--dir') ? path.resolve(flag('--dir')) : null;
 // Stable port per project: hash project path into 8787-8887 range (unless --port is explicit)
 const EXPLICIT_PORT = flag('--port');

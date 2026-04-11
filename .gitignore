@@ -1,2 +1,10 @@
 registry.json
 node_modules/
+
+# Never commit accidental project data into the plugin repo.
+# The plugin is meant to operate on OTHER projects; these paths
+# exist only as a safety net if the PROJECT_ROOT self-guard is
+# bypassed somehow (e.g. someone passes --project pointing here).
+mockups/
+.mockup-gallery/
+.atomize-gallery/

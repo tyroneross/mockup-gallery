@@ -1,21 +1,4 @@
 {
-  "name": "mockup-gallery",
-  "version": "0.4.0",
-  "description": "Design review gallery for HTML mockups — rate, select, save, track implementation",
-  "commands": {
-    "mockup-feedback": {
-      "description": "Pull latest ratings, comments, and selections from the mockup gallery",
-      "file": "commands/mockup-feedback.md"
-    },
-    "mockup-memories": {
-      "description": "Show global and project-specific design memories, or promote learnings",
-      "file": "commands/mockup-memories.md"
-    },
-    "mockup-gallery:sync": {
-      "description": "Check alignment between COMMON.md, CLAUDE.md, and AGENTS.md",
-      "file": "commands/mockup-sync.md"
-    }
-  },
   "hooks": {
     "UserPromptSubmit": [
       {
