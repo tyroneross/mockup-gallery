@@ -10,6 +10,8 @@ Run the sync check:
 node "${CLAUDE_PLUGIN_ROOT}/sync/check-alignment.mjs"
 ```
 
+The alignment check scope covers `COMMON.md`, `CLAUDE.md` (top-level plugin doc), `AGENTS.md`, and the session schema files under `src/schemas/*.json`. In addition to standard drift detection, verify that every session route referenced by a slash command (any `POST` or `GET` path starting with `/session` or `/sessions`) actually exists in `server/gallery-server.mjs`. Flag any command that references a route the server doesn't implement.
+
 If gaps are found:
 1. Show the output to the user
 2. For each gap, read the relevant section of COMMON.md and the platform doc

@@ -1,0 +1,11 @@
+{
+  "slug": "2026-04-01-dashboard",
+  "name": "Dashboard layout v1 vs v2",
+  "goal": "Pick a direction for the main dashboard",
+  "createdAt": "2026-04-01T09:00:00.000Z",
+  "updatedAt": "2026-04-01T09:00:00.000Z",
+  "status": "active",
+  "tags": ["dashboard", "layout"],
+  "supersededBy": null,
+  "decision": null
+}

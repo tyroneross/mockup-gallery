@@ -5,6 +5,8 @@ user_invocable: true
 allowed_tools: Read, Write, Glob, Grep
 ---
 
+> **Note:** Memories are global to the plugin, not per-session. Mockup-specific feedback (ratings, comments, component notes) lives inside the session's `selections.json` under `.mockup-gallery/sessions/<slug>/`. Cross-project design lessons live here in the plugin's `memories/`. Use `/mockup-feedback` for session-scoped review data; use this command for durable learnings.
+
 Check the argument. If "promote" was passed, go to the Promote section. Otherwise, show memories.
 
 ## Show Memories

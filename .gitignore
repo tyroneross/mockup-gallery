@@ -5,6 +5,12 @@ node_modules/
 # The plugin is meant to operate on OTHER projects; these paths
 # exist only as a safety net if the PROJECT_ROOT self-guard is
 # bypassed somehow (e.g. someone passes --project pointing here).
-mockups/
-.mockup-gallery/
-.atomize-gallery/
+# Root-anchored (leading slash) so legitimate fixtures under
+# test/fixtures/<name>/mockups/ and test/fixtures/<name>/.mockup-gallery/
+# are NOT ignored.
+/mockups/
+/.mockup-gallery/
+/.atomize-gallery/
+
+# Build-loop scratch directories (self-test workspaces)
+/.build-loop/tmp/

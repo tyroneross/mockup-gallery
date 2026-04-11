@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MockupSession",
+  "type": "object",
+  "required": ["slug", "name", "createdAt", "updatedAt", "status"],
+  "properties": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "URL-safe identifier, lowercase alphanum + hyphen"
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "goal": { "type": "string", "maxLength": 1000 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "status": {
+      "type": "string",
+      "enum": ["active", "decided", "stale", "superseded"]
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+      "default": []
+    },
+    "supersededBy": {
+      "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }],
+      "default": null
+    },
+    "decision": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["file", "decidedAt"],
+          "properties": {
+            "file": { "type": "string" },
+            "decidedAt": { "type": "string", "format": "date-time" },
+            "note": { "type": ["string", "null"], "default": null }
+          }
+        }
+      ],
+      "default": null
+    }
+  },
+  "additionalProperties": false
+}

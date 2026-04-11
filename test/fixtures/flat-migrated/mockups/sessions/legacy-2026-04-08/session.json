@@ -1,0 +1,11 @@
+{
+  "slug": "legacy-2026-04-08",
+  "name": "Pre-session layout",
+  "goal": "Migrated from flat mockups/ directory",
+  "createdAt": "2026-04-08T12:00:00.000Z",
+  "updatedAt": "2026-04-08T12:00:00.000Z",
+  "status": "active",
+  "tags": ["legacy", "migrated"],
+  "supersededBy": null,
+  "decision": null
+}

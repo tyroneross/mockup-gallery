@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MockupGalleryState",
+  "type": "object",
+  "required": ["version", "currentSession"],
+  "properties": {
+    "version": { "type": "integer", "const": 2 },
+    "currentSession": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
+      ]
+    },
+    "migratedFrom": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "enum": ["flat"] }
+      ],
+      "default": null
+    },
+    "migratedAt": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "format": "date-time" }
+      ],
+      "default": null
+    }
+  },
+  "additionalProperties": false
+}
