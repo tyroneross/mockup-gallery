@@ -158,6 +158,27 @@
     .select-btn.is-selected { background: rgba(129,140,248,0.3); border-color: rgba(129,140,248,0.7); color: #fff; }
     .select-btn.is-selected::before { content: '\\2713 '; }
 
+    /* Confirm button — muted when no picks pending, prominent when >0 */
+    .confirm-btn {
+      width: auto; padding: 0 14px; height: 32px; display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px; cursor: not-allowed; color: #5a5a72; font-size: 12px; font-weight: 500;
+      transition: all 0.15s; white-space: nowrap; letter-spacing: 0.02em;
+      position: relative;
+    }
+    .confirm-btn.has-picks {
+      background: #34d399; border-color: #34d399; color: #062a1e;
+      cursor: pointer; font-weight: 600;
+      box-shadow: 0 0 0 1px rgba(52,211,153,0.2), 0 0 12px rgba(52,211,153,0.15);
+    }
+    .confirm-btn.has-picks:hover { background: #4ade80; border-color: #4ade80; }
+    .confirm-btn .pick-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px;
+      background: rgba(6,42,30,0.25); border-radius: 9px;
+      font-size: 10px; font-weight: 700;
+    }
+
     /* Refresh button -- small, muted */
     .refresh-btn {
       width: auto; padding: 0 8px; height: 24px; display: flex; align-items: center; justify-content: center;
@@ -196,7 +217,7 @@
     }
     .route-option:hover { background: rgba(129,140,248,0.08); color: #f0f0f5; border-color: rgba(129,140,248,0.25); }
     .route-option.taken { color: #5a5a72; }
-    .route-option.taken::after { content: ' (replace)'; font-size: 10px; color: #fbbf24; }
+    .route-option.taken::after { content: ' (add candidate)'; font-size: 10px; color: #fbbf24; }
     .route-option-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .route-path { font-size: 10px; color: #5a5a72; font-family: monospace; flex-shrink: 0; }
     .route-platform {
@@ -354,6 +375,251 @@
       .rate-btn { padding: 5px 10px; font-size: 10px; }
     }
     @media (max-width: 600px) { .component-panel { display: none; } }
+
+    /* ======================================================================
+     * Session switcher (additive — all classes prefixed `session-`)
+     * ====================================================================== */
+    .session-pill {
+      position: relative;
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 32px; padding: 0 4px 0 10px;
+      background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      font-size: 11px; color: #c0c0cc;
+      cursor: default;
+      transition: border-color 0.15s, background 0.15s;
+      margin-right: 6px;
+    }
+    .session-pill:hover { border-color: rgba(129,140,248,0.35); }
+    .session-pill.is-hidden { display: none; }
+    .session-pill-label {
+      font-size: 10px; color: #5a5a72; letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .session-pill-name {
+      font-weight: 500; color: #f0f0f5; max-width: 140px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .session-pill-badge {
+      font-size: 9px; font-weight: 600; letter-spacing: 0.04em;
+      text-transform: uppercase; padding: 1px 6px; border-radius: 9px;
+      border: 0.5px solid transparent;
+    }
+    .session-pill-badge[data-status="active"] {
+      color: #34d399; border-color: rgba(52,211,153,0.35);
+      background: rgba(52,211,153,0.08);
+      box-shadow: 0 0 6px rgba(52,211,153,0.15);
+    }
+    .session-pill-badge[data-status="decided"] {
+      color: #818cf8; border-color: rgba(129,140,248,0.35);
+      background: rgba(129,140,248,0.08);
+    }
+    .session-pill-badge[data-status="stale"] {
+      color: #9ca3af; border-color: rgba(156,163,175,0.3);
+      background: rgba(156,163,175,0.06);
+    }
+    .session-pill-badge[data-status="superseded"] {
+      color: #6b7280; border-color: rgba(107,114,128,0.25);
+      background: rgba(107,114,128,0.05);
+      text-decoration: line-through;
+    }
+    .session-pill-chevron {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 24px; margin-left: 2px;
+      background: none; border: none; color: #8a8aa0; font-size: 11px;
+      border-radius: 5px; cursor: pointer;
+    }
+    .session-pill-chevron:hover { background: rgba(255,255,255,0.05); color: #f0f0f5; }
+
+    .session-dropdown {
+      position: absolute; top: 38px; left: 0; z-index: 200;
+      min-width: 320px; max-width: 400px;
+      background: #1a1a24; border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.3);
+      padding: 6px;
+      display: none;
+      max-height: 480px; overflow-y: auto;
+    }
+    .session-dropdown.is-open { display: block; }
+    .session-dropdown-current {
+      padding: 8px 10px; margin-bottom: 6px;
+      background: rgba(129,140,248,0.08);
+      border: 0.5px solid rgba(129,140,248,0.3);
+      border-radius: 6px;
+      cursor: default;
+    }
+    .session-dropdown-current .session-row-name { color: #f0f0f5; font-weight: 600; }
+    .session-dropdown-section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 8px; margin-top: 4px;
+      font-size: 9px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: #5a5a72;
+      cursor: pointer; user-select: none;
+      border-radius: 4px;
+    }
+    .session-dropdown-section-header:hover { background: rgba(255,255,255,0.03); color: #8a8aa0; }
+    .session-dropdown-section-header .session-chev { font-size: 10px; }
+    .session-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; margin-bottom: 2px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .session-row:hover { background: rgba(129,140,248,0.08); }
+    .session-row-main { flex: 1; min-width: 0; }
+    .session-row-name {
+      font-size: 12px; color: #c0c0cc; font-weight: 500;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .session-row-meta {
+      display: flex; align-items: center; gap: 6px; margin-top: 2px;
+      font-size: 10px; color: #5a5a72;
+    }
+    .session-row-tags {
+      display: inline-flex; gap: 3px; flex-wrap: wrap;
+    }
+    .session-row-tag {
+      font-size: 9px; color: #8a8aa0;
+      padding: 0 5px; border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 0.5px solid rgba(255,255,255,0.06);
+    }
+    .session-dropdown-divider {
+      height: 1px; margin: 6px 2px;
+      background: rgba(255,255,255,0.05);
+    }
+    .session-dropdown-new {
+      width: 100%; margin-top: 6px; padding: 8px 10px;
+      background: rgba(52,211,153,0.08);
+      border: 0.5px dashed rgba(52,211,153,0.35);
+      border-radius: 6px;
+      color: #34d399; font-size: 11px; font-weight: 600;
+      cursor: pointer; text-align: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .session-dropdown-new:hover {
+      background: rgba(52,211,153,0.14);
+      border-color: rgba(52,211,153,0.55);
+    }
+    .session-dropdown-empty {
+      padding: 10px; text-align: center;
+      font-size: 11px; color: #5a5a72; font-style: italic;
+    }
+
+    /* New session modal */
+    .session-modal-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(8,8,12,0.72);
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .session-modal {
+      width: 440px; max-width: calc(100vw - 40px);
+      background: #14141c;
+      border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+      padding: 20px;
+    }
+    .session-modal h3 {
+      margin: 0 0 4px 0;
+      font-size: 14px; font-weight: 600; color: #f0f0f5;
+    }
+    .session-modal-desc {
+      margin: 0 0 16px 0;
+      font-size: 11px; color: #8a8aa0;
+    }
+    .session-modal-field { margin-bottom: 12px; }
+    .session-modal-label {
+      display: block; margin-bottom: 4px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+      text-transform: uppercase; color: #8a8aa0;
+    }
+    .session-modal-input,
+    .session-modal-textarea {
+      width: 100%; box-sizing: border-box;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: #f0f0f5; font-size: 12px;
+      font-family: inherit;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .session-modal-textarea { min-height: 64px; resize: vertical; }
+    .session-modal-input:focus,
+    .session-modal-textarea:focus {
+      outline: none;
+      border-color: rgba(129,140,248,0.5);
+      background: rgba(129,140,248,0.05);
+    }
+    .session-modal-hint {
+      margin-top: 3px; font-size: 10px; color: #5a5a72;
+    }
+    .session-modal-actions {
+      display: flex; gap: 8px; margin-top: 16px;
+    }
+    .session-modal-cancel,
+    .session-modal-create {
+      flex: 1; padding: 9px;
+      border-radius: 6px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .session-modal-cancel {
+      background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(255,255,255,0.1);
+      color: #c0c0cc;
+    }
+    .session-modal-cancel:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.15);
+    }
+    .session-modal-create {
+      background: rgba(52,211,153,0.06);
+      border: 0.5px solid rgba(52,211,153,0.2);
+      color: #5a5a72;
+      cursor: not-allowed;
+    }
+    .session-modal-create.is-ready {
+      background: #34d399; border-color: #34d399; color: #062a1e;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(52,211,153,0.2), 0 0 14px rgba(52,211,153,0.2);
+    }
+    .session-modal-create.is-ready:hover {
+      background: #4ade80; border-color: #4ade80;
+    }
+    .session-modal-error {
+      margin-top: 10px;
+      font-size: 11px; color: #fb7185;
+    }
+
+    /* Legacy migration banner */
+    .session-migration-banner {
+      display: none;
+      padding: 8px 14px;
+      background: rgba(251,191,36,0.08);
+      border-bottom: 0.5px solid rgba(251,191,36,0.25);
+      color: #fbbf24; font-size: 11px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .session-migration-banner.is-hidden { display: none !important; }
+    .session-migration-banner code {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      padding: 1px 6px; border-radius: 4px;
+      background: rgba(251,191,36,0.12);
+      border: 0.5px solid rgba(251,191,36,0.25);
+      color: #fcd34d;
+    }
+    .session-migration-banner-dismiss {
+      margin-left: auto;
+      background: none; border: none; color: #fbbf24;
+      font-size: 14px; cursor: pointer; padding: 0 4px;
+    }
+    .session-migration-banner-dismiss:hover { color: #fcd34d; }
   </style>
 </head>
 <body>
@@ -379,6 +645,10 @@
   </div>
 
   <div class="main">
+    <div class="session-migration-banner is-hidden" id="session-migration-banner">
+      <span>This project uses the flat layout. Run <code>npx mockup-gallery migrate</code> to upgrade to sessions.</span>
+      <button class="session-migration-banner-dismiss" id="session-migration-banner-dismiss" aria-label="Dismiss">&times;</button>
+    </div>
     <div class="review-bar">
       <button class="arrow-btn" id="prev-btn">&larr;</button>
       <button class="arrow-btn" id="next-btn">&rarr;</button>
@@ -387,8 +657,10 @@
         <div class="review-meta" id="r-meta">-</div>
       </div>
       <span class="position-ct" id="pos-ct"></span>
+      <div class="session-pill is-hidden" id="session-pill"><span class="session-pill-label">Session:</span><span class="session-pill-name" id="session-pill-name">&hellip;</span><span class="session-pill-badge" id="session-pill-badge" data-status="active">active</span><button class="session-pill-chevron" id="session-pill-toggle" aria-label="Switch session">&#9662;</button><div class="session-dropdown" id="session-dropdown"></div></div>
       <button class="save-btn" id="save-btn" title="Save for later">Save</button>
-      <button class="select-btn" id="select-btn" title="Select this mockup for a page route">Select</button>
+      <button class="select-btn" id="select-btn" title="Pick this mockup for review">Select</button>
+      <button class="confirm-btn" id="confirm-btn" title="Confirm your selected picks" disabled>Confirm</button>
       <div class="rating-group" id="page-rating"></div>
       <button class="archive-btn" id="archive-btn" title="Archive this mockup">Archive</button>
       <button class="refresh-btn" id="refresh-btn" title="Clear notes on unrated mockups">Refresh</button>
@@ -435,7 +707,16 @@ let ACCEPTED = {}; // { "filename.html": true } from server
 let projectInfo = { lastChange: 0, projectName: 'Project' };
 let implData = {};       // { "file.html": { "Component": { status, codePath } } }
 let selectionsData = {}; // from /selections
-let selectedBuild = { pages: {}, components: {} }; // from /selected
+let selectedBuild = { pages: {}, components: {}, picks: [], saved: [] }; // from /selected
+
+// Session state (additive) --------------------------------------------------
+let SESSIONS = [];            // array from GET /sessions
+let CURRENT_SESSION = null;   // slug string or null
+let LAYOUT_MODE = 'flat';     // 'flat' or 'sessions' (from X-Mockup-Gallery-Layout)
+let NEEDS_MIGRATION = false;  // true when server reports flat layout w/ upgrade path
+let _sessionDropdownOpen = false;
+let _sessionSectionOpen = { decided: false, stale: false };
+let _migrationBannerDismissed = false;
 
 // Categorized lists
 let catActive = [], catSelected = [], catArchived = [];
@@ -521,7 +802,14 @@ function categorize(mockups, pInfo, iData, sData) {
   }
 
   // Build set of selected source files and saved source files
-  const selectedFiles = new Set(Object.values(selectedBuild.pages || {}).map(p => p.source));
+  // pages[route] is an array of candidate entries (new shape); tolerate legacy object.
+  const selectedFiles = new Set();
+  for (const value of Object.values(selectedBuild.pages || {})) {
+    const entries = Array.isArray(value) ? value : (value ? [value] : []);
+    entries.forEach(e => { if (e && e.source) selectedFiles.add(e.source); });
+  }
+  // Also treat pending picks as "selected" for sidebar grouping purposes.
+  (selectedBuild.picks || []).forEach(p => { if (p && p.source) selectedFiles.add(p.source); });
   const savedFiles = new Set((selectedBuild.saved || []).map(s => s.source));
 
   for (const m of mockups) {
@@ -724,6 +1012,7 @@ async function showRouteModal(onSelect, mockupFile) {
   const typeLabel = {
     'nextjs': 'Next.js App Router',
     'nextjs-pages': 'Next.js Pages',
+    'astro': 'Astro Pages',
     'swift': 'SwiftUI Views',
     'python': 'API Routes',
     'static': 'Static Pages',
@@ -731,7 +1020,8 @@ async function showRouteModal(onSelect, mockupFile) {
 
   const routeButtons = routes.map(r => {
     const routeKey = r.path;
-    const taken = selectedBuild.pages[routeKey];
+    const takenVal = selectedBuild.pages[routeKey];
+    const taken = Array.isArray(takenVal) ? takenVal.length > 0 : !!takenVal;
     const isSuggested = suggestedRoute && suggestedRoute.path === routeKey;
     const platformBadge = isSwift && r.platform && r.platform !== 'shared'
       ? `<span class="route-platform">${r.platform}</span>`
@@ -790,29 +1080,72 @@ async function selectRoute(route) {
   }
 }
 
-async function selectCurrentPage() {
-  if (M.length === 0) return;
-  const currentFile = M[S.cur].file;
-  showRouteModal(async (route) => {
-    // Check if this targets an existing screen
-    const existingRoutes = new Set((_detectedRoutes?.routes || []).map(r => r.path));
-    const isUpdate = existingRoutes.has(route);
+// Toggle the current mockup in the "picks" (pending review) list.
+// This replaces the old Select behaviour — Select no longer opens the route modal.
+async function togglePickCurrentByFile(file) {
+  if (!file) return;
+  if (!Array.isArray(selectedBuild.picks)) selectedBuild.picks = [];
+  const idx = selectedBuild.picks.findIndex(p => p && p.source === file);
+  if (idx >= 0) selectedBuild.picks.splice(idx, 1);
+  else selectedBuild.picks.push({ source: file, pickedAt: new Date().toISOString().split('T')[0], note: null });
+  await saveSelected();
+  render();
+}
 
-    // Show change note prompt
-    showChangeNoteModal(isUpdate, currentFile, async (changeNote) => {
-      selectedBuild.pages[route] = {
-        source: currentFile,
+async function togglePickCurrent() {
+  if (M.length === 0) return;
+  const file = M[S.cur].file;
+  if (!Array.isArray(selectedBuild.picks)) selectedBuild.picks = [];
+  const idx = selectedBuild.picks.findIndex(p => p && p.source === file);
+  if (idx >= 0) {
+    selectedBuild.picks.splice(idx, 1);
+  } else {
+    selectedBuild.picks.push({
+      source: file,
+      pickedAt: new Date().toISOString().split('T')[0],
+      note: null,
+    });
+  }
+  await saveSelected();
+  render();
+}
+
+// Assign a specific source file to a page route. Pushes a new candidate
+// onto selectedBuild.pages[route] (does not replace existing entries).
+async function assignSourceToPage(sourceFile) {
+  if (!sourceFile) return;
+  showRouteModal(async (route) => {
+    const existingRoutes = new Set((_detectedRoutes?.routes || []).map(r => r.path));
+    const routeTaken = Array.isArray(selectedBuild.pages[route]) && selectedBuild.pages[route].length > 0;
+    const isUpdate = existingRoutes.has(route) || routeTaken;
+
+    showChangeNoteModal(isUpdate, sourceFile, async (changeNote) => {
+      if (!Array.isArray(selectedBuild.pages[route])) selectedBuild.pages[route] = [];
+      selectedBuild.pages[route].push({
+        source: sourceFile,
         selectedAt: new Date().toISOString().split('T')[0],
         note: null,
         changeNote: changeNote || null,
-        status: null  // null = pending, 'done' = implemented
-      };
+        status: null,
+      });
+      // Remove from picks now that it's been assigned.
+      if (Array.isArray(selectedBuild.picks)) {
+        selectedBuild.picks = selectedBuild.picks.filter(p => !(p && p.source === sourceFile));
+      }
       await saveSelected();
+      closeConfirmModal();
       render();
       const selSection = document.getElementById('selected-section');
       if (selSection) selSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-  }, currentFile);
+  }, sourceFile);
+}
+
+// Legacy entry point — now routes through assignSourceToPage for the *current* mockup.
+// No longer bound to the Select button; kept in case other call sites exist.
+async function selectCurrentPage() {
+  if (M.length === 0) return;
+  await assignSourceToPage(M[S.cur].file);
 }
 
 function showChangeNoteModal(isUpdate, mockupFile, onConfirm) {
@@ -898,28 +1231,107 @@ async function removeSaved(file) {
   render();
 }
 
-async function markSelectedDone(route) {
-  if (selectedBuild.pages[route]) {
-    selectedBuild.pages[route].status = selectedBuild.pages[route].status === 'done' ? null : 'done';
-    await saveSelected();
-    render();
-  }
+// Helper: normalize a route's candidates to an array (handles legacy shape).
+function getRouteCandidates(route) {
+  const v = selectedBuild.pages[route];
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') return [v];
+  return [];
 }
 
-async function editChangeNote(route) {
-  const current = selectedBuild.pages[route]?.changeNote || '';
-  const note = prompt('Change description (what to update/build):', current);
-  if (note !== null && selectedBuild.pages[route]) {
-    selectedBuild.pages[route].changeNote = note.trim() || null;
-    await saveSelected();
-    render();
-  }
-}
-
-async function removeSelectedPage(route) {
-  delete selectedBuild.pages[route];
+async function markSelectedDone(route, candidateIdx = 0) {
+  const list = getRouteCandidates(route);
+  if (!list[candidateIdx]) return;
+  list[candidateIdx].status = list[candidateIdx].status === 'done' ? null : 'done';
+  selectedBuild.pages[route] = list;
   await saveSelected();
   render();
+}
+
+async function editChangeNote(route, candidateIdx = 0) {
+  const list = getRouteCandidates(route);
+  if (!list[candidateIdx]) return;
+  const current = list[candidateIdx].changeNote || '';
+  const note = prompt('Change description (what to update/build):', current);
+  if (note !== null) {
+    list[candidateIdx].changeNote = note.trim() || null;
+    selectedBuild.pages[route] = list;
+    await saveSelected();
+    render();
+  }
+}
+
+async function removeSelectedPage(route, candidateIdx = null) {
+  if (candidateIdx === null) {
+    delete selectedBuild.pages[route];
+  } else {
+    const list = getRouteCandidates(route);
+    list.splice(candidateIdx, 1);
+    if (list.length === 0) delete selectedBuild.pages[route];
+    else selectedBuild.pages[route] = list;
+  }
+  await saveSelected();
+  render();
+}
+
+// -- Confirm picks modal --------------------------------------------------
+function openConfirmModal() {
+  if (!Array.isArray(selectedBuild.picks) || selectedBuild.picks.length === 0) return;
+  closeConfirmModal();
+  const overlay = document.createElement('div');
+  overlay.className = 'route-modal-overlay';
+  overlay.id = 'confirm-modal-overlay';
+
+  const rows = selectedBuild.picks.map((pick, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:10px;background:rgba(255,255,255,0.03);border:0.5px solid rgba(255,255,255,0.06);border-radius:6px;margin-bottom:6px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;color:#f0f0f5;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(pick.source)}</div>
+        <div style="font-size:10px;color:#5a5a72;">picked ${esc(pick.pickedAt || '')}</div>
+      </div>
+      <button data-pick-action="assign" data-idx="${i}" style="padding:5px 10px;background:rgba(129,140,248,0.12);border:0.5px solid rgba(129,140,248,0.4);border-radius:4px;color:#a5b4fc;font-size:11px;cursor:pointer;">Assign to page\u2026</button>
+      <button data-pick-action="remove" data-idx="${i}" title="Remove pick" style="padding:5px 8px;background:none;border:0.5px solid rgba(251,113,133,0.25);border-radius:4px;color:#fb7185;font-size:11px;cursor:pointer;">\u2715</button>
+    </div>
+  `).join('');
+
+  overlay.innerHTML = `
+    <div class="route-modal" style="width:460px;">
+      <h3>Confirm picks (${selectedBuild.picks.length})</h3>
+      <div class="route-modal-desc">Review your selected mockups. Assign each to a page route, or commit them as unassigned candidates.</div>
+      ${rows}
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="route-modal-cancel" style="flex:1;" onclick="closeConfirmModal()">Close</button>
+        <button id="confirm-commit-btn" style="flex:1;padding:7px;background:rgba(52,211,153,0.12);border:0.5px solid rgba(52,211,153,0.4);border-radius:6px;color:#34d399;font-size:11px;cursor:pointer;font-weight:600;">Commit all</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) { closeConfirmModal(); return; }
+    const btn = e.target.closest('[data-pick-action]');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx, 10);
+    const pick = selectedBuild.picks[idx];
+    if (!pick) return;
+    if (btn.dataset.pickAction === 'assign') {
+      assignSourceToPage(pick.source);
+    } else if (btn.dataset.pickAction === 'remove') {
+      selectedBuild.picks.splice(idx, 1);
+      saveSelected();
+      closeConfirmModal();
+      if (selectedBuild.picks.length > 0) openConfirmModal();
+      render();
+    }
+  });
+  document.getElementById('confirm-commit-btn')?.addEventListener('click', () => {
+    // "Commit" is a visual no-op — picks are already persisted. Just close.
+    closeConfirmModal();
+    flash('save-status', 'Picks confirmed', '#34d399');
+  });
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirm-modal-overlay')?.remove();
 }
 
 async function selectComponent(compName) {
@@ -950,9 +1362,14 @@ async function removeSelectedComponent(compName) {
 function refreshUnrated() {
   if (!confirm('Clear notes on unrated mockups? (Yay, Nay, Archive, and Selected items keep their notes.)')) return;
 
-  // Build set of selected source files
-  const selectedSourceFiles = new Set(Object.values(selectedBuild.pages).map(p => p.source));
+  // Build set of selected source files (pages may be arrays of candidates)
+  const selectedSourceFiles = new Set();
+  for (const value of Object.values(selectedBuild.pages)) {
+    const entries = Array.isArray(value) ? value : (value ? [value] : []);
+    entries.forEach(e => { if (e && e.source) selectedSourceFiles.add(e.source); });
+  }
   Object.values(selectedBuild.components).forEach(c => { if (c.source) selectedSourceFiles.add(c.source); });
+  (selectedBuild.picks || []).forEach(p => { if (p && p.source) selectedSourceFiles.add(p.source); });
 
   for (const m of M) {
     const rating = S.rat[m.file];
@@ -1024,12 +1441,23 @@ function render() {
   document.getElementById('sidebar-sub').textContent = projectInfo.projectName || `${M.length} mockup${M.length !== 1 ? 's' : ''}`;
 
   // Build a set of files that are selected as page sources (for star indicator)
-  const selectedSourceFiles = new Set(Object.values(selectedBuild.pages).map(p => p.source));
+  const selectedSourceFiles = new Set();
+  for (const value of Object.values(selectedBuild.pages)) {
+    const entries = Array.isArray(value) ? value : (value ? [value] : []);
+    entries.forEach(e => { if (e && e.source) selectedSourceFiles.add(e.source); });
+  }
 
   let nh = '';
 
-  // SELECTED section (top of sidebar — mockups chosen for implementation)
-  const selPageRoutes = Object.entries(selectedBuild.pages || {});
+  // Flatten pages into [{ routePath, candidateIdx, entry, total }]
+  const flatCandidates = [];
+  for (const [route, value] of Object.entries(selectedBuild.pages || {})) {
+    const entries = Array.isArray(value) ? value : (value ? [value] : []);
+    entries.forEach((entry, i) => {
+      flatCandidates.push({ routePath: route, candidateIdx: i, entry, total: entries.length });
+    });
+  }
+
   const selCompsByPage = {};
   Object.entries(selectedBuild.components || {}).forEach(([compName, data]) => {
     const pg = data.page || 'global';
@@ -1037,75 +1465,75 @@ function render() {
     selCompsByPage[pg].push({ compName, source: data.source });
   });
 
-  if (selPageRoutes.length > 0 || Object.keys(selCompsByPage).length > 0) {
+  const picks = Array.isArray(selectedBuild.picks) ? selectedBuild.picks : [];
+
+  if (flatCandidates.length > 0 || Object.keys(selCompsByPage).length > 0 || picks.length > 0) {
     // Build set of existing routes for "update vs new" detection
     const existingRoutes = new Set((_detectedRoutes?.routes || []).map(r => r.path));
 
-    // Count pending changes
-    const pendingCount = catSelected.filter(x => {
-      const route = selPageRoutes.find(([, p]) => p.source === x.file);
-      const routePath = route ? route[0] : null;
-      const pageData = routePath ? selectedBuild.pages[routePath] : null;
-      return !(pageData && pageData.status === 'done');
-    }).length;
-
+    // Count pending (not-done) candidates
+    const pendingCount = flatCandidates.filter(c => !(c.entry && c.entry.status === 'done')).length;
     const pendingLabel = pendingCount > 0 ? ` \u00B7 <span style="color:#fb923c;">${pendingCount} pending</span>` : '';
+    const picksLabel = picks.length > 0 ? ` \u00B7 <span style="color:#34d399;">${picks.length} pick${picks.length !== 1 ? 's' : ''}</span>` : '';
 
     nh += `<div class="selected-section" id="selected-section">
       <div class="nav-label" style="color:#818cf8;cursor:pointer;" onclick="sectionCollapsed.selected=!sectionCollapsed.selected;render();">
-        SELECTED (${catSelected.length})${pendingLabel} ${sectionCollapsed.selected ? '&#9662;' : '&#9652;'}
+        SELECTED (${flatCandidates.length})${pendingLabel}${picksLabel} ${sectionCollapsed.selected ? '&#9662;' : '&#9652;'}
       </div>`;
     if (!sectionCollapsed.selected) {
-      // Show selected mockups — pending changes highlighted
-      catSelected.forEach(x => {
-        const idx = fileIdx[x.file];
-        const route = selPageRoutes.find(([, p]) => p.source === x.file);
-        const routePath = route ? route[0] : null;
-        const pageData = routePath ? selectedBuild.pages[routePath] : null;
-        const isDone = pageData && pageData.status === 'done';
-        const changeNote = pageData ? pageData.changeNote || '' : '';
-        const isUpdate = routePath && existingRoutes.has(routePath);
+      // Render picks (pending review, not yet assigned) first
+      picks.forEach((pick, pickIdx) => {
+        const idx = fileIdx[pick.source];
+        if (idx === undefined) return;
+        const name = M[idx].name;
+        nh += `<div class="nav-item${idx === S.cur ? ' active' : ''} sel-pending" onclick="go(${idx})">
+          <span class="ni-dot" style="background:#34d399;"></span>
+          <span class="ni-name">${esc(name)}</span>
+          <span class="ni-impl ni-impl-new" title="Picked for review — not yet assigned">pick</span>
+          <span class="ni-unselect" onclick="event.stopPropagation();togglePickCurrentByFile('${esc(pick.source)}')" title="Remove pick">&times;</span>
+        </div>`;
+      });
+
+      // Render assigned candidates (may be multiple per route)
+      flatCandidates.forEach(({ routePath, candidateIdx, entry, total }) => {
+        const idx = fileIdx[entry.source];
+        if (idx === undefined) return;
+        const name = M[idx].name;
+        const isDone = entry && entry.status === 'done';
+        const changeNote = entry?.changeNote || '';
+        const isUpdate = existingRoutes.has(routePath);
+        const ordinal = total > 1 ? ` <span style="font-size:9px;color:#5a5a72;">${candidateIdx + 1} of ${total}</span>` : '';
 
         let statusBadge = '';
-        if (isDone) {
-          statusBadge = '<span class="ni-impl ni-impl-done" title="Implemented">done</span>';
-        } else if (isUpdate) {
-          statusBadge = '<span class="ni-impl ni-impl-update" title="Will update existing screen — pending">update</span>';
-        } else {
-          statusBadge = '<span class="ni-impl ni-impl-new" title="New screen to build — pending">new</span>';
-        }
+        if (isDone) statusBadge = '<span class="ni-impl ni-impl-done" title="Implemented">done</span>';
+        else if (isUpdate) statusBadge = '<span class="ni-impl ni-impl-update" title="Will update existing screen — pending">update</span>';
+        else statusBadge = '<span class="ni-impl ni-impl-new" title="New screen to build — pending">new</span>';
 
-        const doneBtn = routePath && !isDone
-          ? `<span class="ni-done-btn" onclick="event.stopPropagation();markSelectedDone('${esc(routePath)}')" title="Mark as implemented">\u2713</span>`
+        const doneBtn = !isDone
+          ? `<span class="ni-done-btn" onclick="event.stopPropagation();markSelectedDone('${esc(routePath)}',${candidateIdx})" title="Mark as implemented">\u2713</span>`
           : '';
-        const unselectBtn = routePath
-          ? `<span class="ni-unselect" onclick="event.stopPropagation();removeSelectedPage('${esc(routePath)}')" title="Remove from Selected">&times;</span>`
-          : '';
-
-        // Pending items get accent left border
+        const unselectBtn = `<span class="ni-unselect" onclick="event.stopPropagation();removeSelectedPage('${esc(routePath)}',${candidateIdx})" title="Remove from Selected">&times;</span>`;
         const pendingClass = isDone ? '' : ' sel-pending';
 
         nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}${pendingClass}" onclick="go(${idx})">
           <span class="ni-dot" style="background:${isDone ? '#34d399' : '#818cf8'};"></span>
-          <span class="ni-name">${esc(x.name)}</span>
+          <span class="ni-name">${esc(name)}</span>
           ${statusBadge}
-          <span class="ni-page" style="color:#818cf8;">${routePath ? esc(routePath) : ''}</span>
+          <span class="ni-page" style="color:#818cf8;">${esc(routePath)}${ordinal}</span>
           ${doneBtn}${unselectBtn}
         </div>`;
-        // Show change note + actions for pending items
-        if (!isDone && routePath) {
+        if (!isDone) {
           if (changeNote) {
-            nh += `<div class="sel-change-note" onclick="editChangeNote('${esc(routePath)}')" title="${esc(changeNote)}">
+            nh += `<div class="sel-change-note" onclick="editChangeNote('${esc(routePath)}',${candidateIdx})" title="${esc(changeNote)}">
               \u270E ${esc(changeNote.length > 60 ? changeNote.slice(0, 57) + '...' : changeNote)}
             </div>`;
           } else {
-            nh += `<div class="sel-change-note" onclick="editChangeNote('${esc(routePath)}')" style="color:#5a5a72;font-style:italic;">
+            nh += `<div class="sel-change-note" onclick="editChangeNote('${esc(routePath)}',${candidateIdx})" style="color:#5a5a72;font-style:italic;">
               + add change description
             </div>`;
           }
-        }
-        if (isDone && routePath) {
-          nh += `<div class="sel-change-note" style="color:#34d399;" onclick="markSelectedDone('${esc(routePath)}')">
+        } else {
+          nh += `<div class="sel-change-note" style="color:#34d399;" onclick="markSelectedDone('${esc(routePath)}',${candidateIdx})">
             \u2713 implemented — click to reopen
           </div>`;
         }
@@ -1204,11 +1632,33 @@ function render() {
   saveBtn.className = 'save-btn' + (isSaved ? ' is-saved' : '');
   saveBtn.textContent = isSaved ? 'Saved' : 'Save';
 
-  // Select button state
+  // Select button state — reflects membership in picks OR assigned pages.
   const selBtn = document.getElementById('select-btn');
-  const isSelected = Object.values(selectedBuild.pages || {}).some(p => p.source === m.file);
+  const picksArr = Array.isArray(selectedBuild.picks) ? selectedBuild.picks : [];
+  const inPicks = picksArr.some(p => p && p.source === m.file);
+  let inPages = false;
+  for (const value of Object.values(selectedBuild.pages || {})) {
+    const entries = Array.isArray(value) ? value : (value ? [value] : []);
+    if (entries.some(e => e && e.source === m.file)) { inPages = true; break; }
+  }
+  const isSelected = inPicks || inPages;
   selBtn.className = 'select-btn' + (isSelected ? ' is-selected' : '');
-  selBtn.textContent = isSelected ? 'Selected' : 'Select';
+  selBtn.textContent = isSelected ? 'Selected \u2713' : 'Select';
+
+  // Confirm button state — prominent when picks pending, muted otherwise.
+  const confirmBtn = document.getElementById('confirm-btn');
+  if (confirmBtn) {
+    const pendingPicks = picksArr.length;
+    if (pendingPicks > 0) {
+      confirmBtn.className = 'confirm-btn has-picks';
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = `Confirm <span class="pick-count">${pendingPicks}</span>`;
+    } else {
+      confirmBtn.className = 'confirm-btn';
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Confirm';
+    }
+  }
 
   // Preview iframe
   const iframeHtml = `<iframe id="preview-iframe" src="/mockup/${encodeURIComponent(m.file)}?v=${GALLERY_VERSION}" loading="eager"></iframe>`;
@@ -1347,6 +1797,312 @@ function esc(s) {
     .replace(/'/g, '&#39;').replace(/"/g, '&quot;');
 }
 
+// -- Session switcher (additive) -----------------------------------------
+function sessionDateLabel(s) {
+  return s?.updatedAt || s?.createdAt || '';
+}
+
+async function fetchSessions() {
+  try {
+    const res = await fetch('/sessions');
+    if (!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    SESSIONS = Array.isArray(data?.sessions) ? data.sessions : [];
+    CURRENT_SESSION = data?.currentSession || null;
+    NEEDS_MIGRATION = !!data?.needsMigration;
+  } catch {
+    SESSIONS = [];
+    CURRENT_SESSION = null;
+  }
+  renderSessionPill();
+  renderMigrationBanner();
+}
+
+async function switchSession(slug) {
+  if (!slug || slug === CURRENT_SESSION) { closeSessionDropdown(); return; }
+  try {
+    const res = await fetch('/session/switch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug }),
+    });
+    if (!res.ok) throw new Error('switch failed');
+  } catch {
+    flash('save-status', 'Switch failed', '#fb7185');
+    return;
+  }
+  closeSessionDropdown();
+  // Re-fetch sessions + reload mockup data via existing init path.
+  await fetchSessions();
+  try {
+    const [mockups, sData, selBuild] = await Promise.all([
+      fetch('/mockups').then(r => r.json()),
+      fetch('/selections').then(r => r.json()).catch(() => ({})),
+      fetch('/selected').then(r => r.json()).catch(() => ({ pages: {}, components: {} })),
+    ]);
+    if (Array.isArray(mockups)) M = mockups;
+    selectionsData = sData;
+    if (selBuild && typeof selBuild === 'object') {
+      selectedBuild = {
+        pages: selBuild.pages || {},
+        components: selBuild.components || {},
+        saved: selBuild.saved || [],
+        picks: Array.isArray(selBuild.picks) ? selBuild.picks : [],
+      };
+      for (const [route, value] of Object.entries(selectedBuild.pages)) {
+        if (!Array.isArray(value)) selectedBuild.pages[route] = value ? [value] : [];
+      }
+    }
+    if (S.cur >= M.length) S.cur = 0;
+    render();
+    flash('save-status', 'Switched session', '#34d399');
+  } catch {
+    flash('save-status', 'Reload failed', '#fb7185');
+  }
+}
+
+async function createSession({ name, goal, tags }) {
+  const body = {
+    name: (name || '').trim(),
+    goal: (goal || '').trim() || null,
+    tags: Array.isArray(tags) ? tags : [],
+  };
+  if (!body.name) throw new Error('Name is required');
+  const res = await fetch('/session/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let msg = 'Create failed';
+    try { const j = await res.json(); if (j?.error) msg = j.error; } catch {}
+    throw new Error(msg);
+  }
+  return res.json().catch(() => ({}));
+}
+
+function renderSessionPill() {
+  const pill = document.getElementById('session-pill');
+  if (!pill) return;
+  if (LAYOUT_MODE !== 'sessions' || !CURRENT_SESSION) {
+    pill.classList.add('is-hidden');
+    return;
+  }
+  pill.classList.remove('is-hidden');
+  const current = SESSIONS.find(s => s.slug === CURRENT_SESSION) || { name: CURRENT_SESSION, status: 'active' };
+  const nameEl = document.getElementById('session-pill-name');
+  const badgeEl = document.getElementById('session-pill-badge');
+  if (nameEl) nameEl.textContent = current.name || current.slug || '(session)';
+  if (badgeEl) {
+    const status = current.status || 'active';
+    badgeEl.dataset.status = status;
+    badgeEl.textContent = status;
+  }
+  if (_sessionDropdownOpen) renderSessionDropdown();
+}
+
+function renderSessionDropdown() {
+  const dd = document.getElementById('session-dropdown');
+  if (!dd) return;
+  const current = SESSIONS.find(s => s.slug === CURRENT_SESSION);
+  const others = SESSIONS.filter(s => s.slug !== CURRENT_SESSION);
+  const active = others.filter(s => (s.status || 'active') === 'active');
+  const decided = others.filter(s => s.status === 'decided');
+  const stale = others.filter(s => s.status === 'stale' || s.status === 'superseded');
+
+  const rowHtml = (s, opts = {}) => {
+    const status = s.status || 'active';
+    const tags = Array.isArray(s.tags) && s.tags.length
+      ? `<span class="session-row-tags">${s.tags.slice(0, 3).map(t => `<span class="session-row-tag">${esc(t)}</span>`).join('')}</span>`
+      : '';
+    const date = sessionDateLabel(s);
+    const clickAttr = opts.current ? '' : `data-session-switch="${esc(s.slug)}"`;
+    const wrapClass = opts.current ? 'session-dropdown-current' : 'session-row';
+    return `<div class="${wrapClass}" ${clickAttr}>
+      <div class="session-row-main">
+        <div class="session-row-name">${esc(s.name || s.slug)}</div>
+        <div class="session-row-meta">
+          <span class="session-pill-badge" data-status="${esc(status)}">${esc(status)}</span>
+          ${tags}
+          ${date ? `<span>${esc(date)}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  };
+
+  let html = '';
+  if (current) html += rowHtml(current, { current: true });
+  else html += `<div class="session-dropdown-empty">No current session</div>`;
+
+  if (active.length > 0) {
+    html += `<div class="session-dropdown-section-header" data-session-section-header>
+      <span>Active (${active.length})</span>
+    </div>`;
+    html += active.map(s => rowHtml(s)).join('');
+  }
+
+  if (decided.length > 0) {
+    const open = _sessionSectionOpen.decided;
+    html += `<div class="session-dropdown-section-header" data-session-section="decided">
+      <span>Decided (${decided.length})</span>
+      <span class="session-chev">${open ? '&#9652;' : '&#9662;'}</span>
+    </div>`;
+    if (open) html += decided.map(s => rowHtml(s)).join('');
+  }
+
+  if (stale.length > 0) {
+    const open = _sessionSectionOpen.stale;
+    html += `<div class="session-dropdown-section-header" data-session-section="stale">
+      <span>Stale / superseded (${stale.length})</span>
+      <span class="session-chev">${open ? '&#9652;' : '&#9662;'}</span>
+    </div>`;
+    if (open) html += stale.map(s => rowHtml(s)).join('');
+  }
+
+  if (!current && SESSIONS.length === 0) {
+    html += `<div class="session-dropdown-empty">No sessions yet</div>`;
+  }
+
+  html += `<div class="session-dropdown-divider"></div>
+    <button class="session-dropdown-new" id="session-dropdown-new-btn">+ New session</button>`;
+
+  dd.innerHTML = html;
+}
+
+function openSessionDropdown() {
+  _sessionDropdownOpen = true;
+  renderSessionDropdown();
+  const dd = document.getElementById('session-dropdown');
+  if (dd) dd.classList.add('is-open');
+}
+
+function closeSessionDropdown() {
+  _sessionDropdownOpen = false;
+  const dd = document.getElementById('session-dropdown');
+  if (dd) dd.classList.remove('is-open');
+}
+
+function toggleSessionDropdown() {
+  if (_sessionDropdownOpen) closeSessionDropdown();
+  else openSessionDropdown();
+}
+
+function openNewSessionModal() {
+  closeSessionDropdown();
+  closeNewSessionModal();
+  const overlay = document.createElement('div');
+  overlay.className = 'session-modal-overlay';
+  overlay.id = 'session-modal-overlay';
+  overlay.innerHTML = `
+    <div class="session-modal" role="dialog" aria-labelledby="session-modal-title">
+      <h3 id="session-modal-title">New review session</h3>
+      <div class="session-modal-desc">Start a fresh session — all new mockups, ratings, and selections will live under it.</div>
+      <div class="session-modal-field">
+        <label class="session-modal-label" for="session-modal-name">Name</label>
+        <input type="text" class="session-modal-input" id="session-modal-name" placeholder="e.g. Onboarding redesign" autocomplete="off" />
+      </div>
+      <div class="session-modal-field">
+        <label class="session-modal-label" for="session-modal-goal">Goal <span style="color:#5a5a72;font-weight:400;text-transform:none;">(optional)</span></label>
+        <textarea class="session-modal-textarea" id="session-modal-goal" placeholder="What are you trying to decide?"></textarea>
+      </div>
+      <div class="session-modal-field">
+        <label class="session-modal-label" for="session-modal-tags">Tags <span style="color:#5a5a72;font-weight:400;text-transform:none;">(optional)</span></label>
+        <input type="text" class="session-modal-input" id="session-modal-tags" placeholder="comma, separated" autocomplete="off" />
+        <div class="session-modal-hint">Comma-separated. Example: mobile, v2, auth</div>
+      </div>
+      <div class="session-modal-error" id="session-modal-error" style="display:none;"></div>
+      <div class="session-modal-actions">
+        <button class="session-modal-cancel" id="session-modal-cancel">Cancel</button>
+        <button class="session-modal-create" id="session-modal-create" disabled>Create session</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const nameInput = document.getElementById('session-modal-name');
+  const goalInput = document.getElementById('session-modal-goal');
+  const tagsInput = document.getElementById('session-modal-tags');
+  const createBtn = document.getElementById('session-modal-create');
+  const errEl = document.getElementById('session-modal-error');
+
+  const updateReady = () => {
+    const ready = (nameInput.value || '').trim().length > 0;
+    createBtn.classList.toggle('is-ready', ready);
+    createBtn.disabled = !ready;
+  };
+  nameInput.addEventListener('input', updateReady);
+  setTimeout(() => nameInput.focus(), 10);
+
+  const doCreate = async () => {
+    if (createBtn.disabled) return;
+    createBtn.disabled = true;
+    createBtn.textContent = 'Creating…';
+    errEl.style.display = 'none';
+    try {
+      const tagList = (tagsInput.value || '').split(',').map(t => t.trim()).filter(Boolean);
+      await createSession({ name: nameInput.value, goal: goalInput.value, tags: tagList });
+      closeNewSessionModal();
+      // Server sets the new session as current; refresh pill + reload data.
+      await fetchSessions();
+      // Reuse existing reload path via switchSession(CURRENT_SESSION) — but server
+      // already swapped current, so just refetch mockups + selections directly.
+      try {
+        const [mockups, sData, selBuild] = await Promise.all([
+          fetch('/mockups').then(r => r.json()),
+          fetch('/selections').then(r => r.json()).catch(() => ({})),
+          fetch('/selected').then(r => r.json()).catch(() => ({ pages: {}, components: {} })),
+        ]);
+        if (Array.isArray(mockups)) M = mockups;
+        selectionsData = sData;
+        if (selBuild && typeof selBuild === 'object') {
+          selectedBuild = {
+            pages: selBuild.pages || {},
+            components: selBuild.components || {},
+            saved: selBuild.saved || [],
+            picks: Array.isArray(selBuild.picks) ? selBuild.picks : [],
+          };
+          for (const [route, value] of Object.entries(selectedBuild.pages)) {
+            if (!Array.isArray(value)) selectedBuild.pages[route] = value ? [value] : [];
+          }
+        }
+        if (S.cur >= M.length) S.cur = 0;
+        render();
+      } catch {}
+      flash('save-status', 'Session created', '#34d399');
+    } catch (e) {
+      errEl.textContent = e?.message || 'Failed to create session';
+      errEl.style.display = 'block';
+      createBtn.textContent = 'Create session';
+      updateReady();
+    }
+  };
+
+  createBtn.addEventListener('click', doCreate);
+  nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCreate(); });
+  document.getElementById('session-modal-cancel').addEventListener('click', closeNewSessionModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeNewSessionModal(); });
+}
+
+function closeNewSessionModal() {
+  document.getElementById('session-modal-overlay')?.remove();
+}
+
+function renderMigrationBanner() {
+  const banner = document.getElementById('session-migration-banner');
+  if (!banner) return;
+  const shouldShow = NEEDS_MIGRATION && LAYOUT_MODE === 'flat' && !_migrationBannerDismissed;
+  banner.classList.toggle('is-hidden', !shouldShow);
+}
+
+// Detect layout mode from /mockups response headers (called once on init).
+async function detectLayoutMode() {
+  try {
+    const res = await fetch('/mockups', { method: 'HEAD' });
+    const header = res.headers.get('X-Mockup-Gallery-Layout');
+    if (header === 'sessions' || header === 'flat') LAYOUT_MODE = header;
+  } catch {}
+}
+
 // -- Init -----------------------------------------------------------------
 async function init() {
   // Version check -- clear on new version
@@ -1385,7 +2141,24 @@ async function init() {
     implData = iData;
     selectionsData = sData;
     if (selBuild && typeof selBuild === 'object') {
-      selectedBuild = { pages: selBuild.pages || {}, components: selBuild.components || {}, saved: selBuild.saved || [] };
+      selectedBuild = {
+        pages: selBuild.pages || {},
+        components: selBuild.components || {},
+        saved: selBuild.saved || [],
+        picks: Array.isArray(selBuild.picks) ? selBuild.picks : [],
+      };
+      // Migrate legacy shape: pages[route] = bare object → wrap in array.
+      let migrated = false;
+      for (const [route, value] of Object.entries(selectedBuild.pages)) {
+        if (!Array.isArray(value)) {
+          selectedBuild.pages[route] = value ? [value] : [];
+          migrated = true;
+        }
+      }
+      if (migrated || !Array.isArray(selBuild.picks)) {
+        // Persist migrated shape so the server copy matches.
+        saveSelected();
+      }
     }
   } catch {
     document.getElementById('sidebar-nav').innerHTML = '<div style="font-size:11px;color:#fb7185;padding:0 8px;">Failed to load mockups. Is the server running?</div>';
@@ -1394,6 +2167,10 @@ async function init() {
 
   if (S.cur >= M.length) S.cur = 0;
   render();
+
+  // Session switcher bootstrap (additive — runs after main render)
+  await detectLayoutMode();
+  await fetchSessions();
 }
 
 // -- Events ---------------------------------------------------------------
@@ -1414,7 +2191,8 @@ document.getElementById('cp-add-btn').addEventListener('click', () => {
 });
 
 document.getElementById('save-btn').addEventListener('click', toggleSaveForLater);
-document.getElementById('select-btn').addEventListener('click', selectCurrentPage);
+document.getElementById('select-btn').addEventListener('click', togglePickCurrent);
+document.getElementById('confirm-btn').addEventListener('click', openConfirmModal);
 document.getElementById('archive-btn').addEventListener('click', archiveCurrent);
 document.getElementById('refresh-btn').addEventListener('click', refreshUnrated);
 document.getElementById('share-btn').addEventListener('click', async () => {
@@ -1431,6 +2209,45 @@ document.getElementById('share-btn').addEventListener('click', async () => {
   } catch (e) {
     alert('Failed to share with Claude. Is the gallery server running?');
   }
+});
+
+// Session switcher events (additive)
+document.getElementById('session-pill-toggle')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleSessionDropdown();
+});
+document.getElementById('session-pill')?.addEventListener('click', (e) => {
+  // Clicking the pill body (not the dropdown itself) toggles the dropdown.
+  const dd = document.getElementById('session-dropdown');
+  if (dd && dd.contains(e.target)) return;
+  if (e.target.id === 'session-pill-toggle') return;
+  toggleSessionDropdown();
+});
+document.getElementById('session-dropdown')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const newBtn = e.target.closest('#session-dropdown-new-btn');
+  if (newBtn) { openNewSessionModal(); return; }
+  const sectionHeader = e.target.closest('[data-session-section]');
+  if (sectionHeader) {
+    const key = sectionHeader.dataset.sessionSection;
+    _sessionSectionOpen[key] = !_sessionSectionOpen[key];
+    renderSessionDropdown();
+    return;
+  }
+  const row = e.target.closest('[data-session-switch]');
+  if (row) {
+    const slug = row.dataset.sessionSwitch;
+    switchSession(slug);
+  }
+});
+document.addEventListener('click', (e) => {
+  if (!_sessionDropdownOpen) return;
+  const pill = document.getElementById('session-pill');
+  if (pill && !pill.contains(e.target)) closeSessionDropdown();
+});
+document.getElementById('session-migration-banner-dismiss')?.addEventListener('click', () => {
+  _migrationBannerDismissed = true;
+  renderMigrationBanner();
 });
 
 document.addEventListener('keydown', function (e) {

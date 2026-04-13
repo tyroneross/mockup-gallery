@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
+import * as sessionStore from '../src/lib/session-store.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GALLERY_DIR = path.resolve(__dirname, '../gallery');
@@ -150,7 +151,34 @@ function detectProjectRoutes(root) {
     }
   }
 
-  // 2. Next.js Pages Router — pages/ directory
+  // 2. Astro — check before Next.js Pages so src/pages isn't misidentified.
+  //    Gated on the presence of astro.config.{mjs,ts,js,cjs} at the project root.
+  const astroConfigs = ['astro.config.mjs', 'astro.config.ts', 'astro.config.js', 'astro.config.cjs'];
+  if (astroConfigs.some(c => fs.existsSync(path.join(root, c)))) {
+    for (const base of ['src/pages', 'pages']) {
+      const pagesDir = path.join(root, base);
+      if (fs.existsSync(pagesDir) && fs.statSync(pagesDir).isDirectory()) {
+        const astroRoutes = [];
+        scanAstroRoutes(pagesDir, pagesDir, astroRoutes);
+        if (astroRoutes.length > 0) {
+          // dedupe by path (e.g. /projects from both index.astro and collisions)
+          const seen = new Set();
+          const unique = [];
+          for (const r of astroRoutes) {
+            if (seen.has(r.path)) continue;
+            seen.add(r.path);
+            unique.push(r);
+          }
+          unique.sort((a, b) => a.path.localeCompare(b.path));
+          result.type = 'astro';
+          result.routes = unique;
+          return result;
+        }
+      }
+    }
+  }
+
+  // 3. Next.js Pages Router — pages/ directory
   for (const base of ['pages', 'src/pages']) {
     const pagesDir = path.join(root, base);
     if (fs.existsSync(pagesDir) && fs.statSync(pagesDir).isDirectory()) {
@@ -160,7 +188,7 @@ function detectProjectRoutes(root) {
     }
   }
 
-  // 3. Swift / SwiftUI — look for .swift view files
+  // 4. Swift / SwiftUI — look for .swift view files
   const swiftViews = scanSwiftViews(root);
   if (swiftViews.length > 0) {
     result.type = 'swift';
@@ -293,6 +321,48 @@ function scanPagesRouter(dir, routePrefix, routes) {
   }
 }
 
+// Astro — recursively scan src/pages for .astro/.md/.mdx files
+function scanAstroRoutes(baseDir, dir, routes) {
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+
+  for (const entry of entries) {
+    // Skip files/dirs starting with _ and anything under api/
+    if (entry.name.startsWith('_') || entry.name.startsWith('.')) continue;
+    if (entry.name === 'api') continue;
+
+    const full = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      scanAstroRoutes(baseDir, full, routes);
+      continue;
+    }
+
+    if (!entry.isFile()) continue;
+    if (!/\.(astro|md|mdx)$/i.test(entry.name)) continue;
+
+    // Build route path from the file path relative to baseDir
+    const rel = path.relative(baseDir, full).split(path.sep).join('/');
+    let routePath = '/' + rel.replace(/\.(astro|md|mdx)$/i, '');
+
+    // index → parent dir
+    routePath = routePath.replace(/\/index$/, '');
+    if (routePath === '') routePath = '/';
+
+    // [...slug] → :slug*
+    routePath = routePath.replace(/\[\.\.\.([^\]]+)\]/g, ':$1*');
+    // [slug] → :slug
+    routePath = routePath.replace(/\[([^\]]+)\]/g, ':$1');
+
+    const segments = routePath.split('/').filter(Boolean);
+    const label = routePath === '/'
+      ? 'Home'
+      : (segments[segments.length - 1] || '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+    routes.push({ path: routePath, label, source: rel });
+  }
+}
+
 // Swift/SwiftUI — find View files (files containing ": View" or "View {")
 function scanSwiftViews(root) {
   const views = [];
@@ -404,40 +474,66 @@ function handler(req, res) {
     return serveFile(res, path.join(GALLERY_DIR, 'gallery.html'), 'text/html; charset=utf-8');
   }
 
-  // GET /mockups → file list (main + archive)
-  if (req.method === 'GET' && pathname === '/mockups') {
+  // GET|HEAD /mockups → file list (main + archive). HEAD is supported so the
+  // client can cheaply detect layout mode via the X-Mockup-Gallery-Layout
+  // response header without pulling the full body.
+  if ((req.method === 'GET' || req.method === 'HEAD') && pathname === '/mockups') {
     try {
-      const EXCLUDE = new Set(['gallery-v2.html', 'atomize-gallery.html', 'gallery.html', 'selected', 'archive']);
-      const mainFiles = fs.readdirSync(MOCKUP_DIR)
-        .filter(f => f.endsWith('.html') && !EXCLUDE.has(f))
-        .map(f => {
-          const stat = fs.statSync(path.join(MOCKUP_DIR, f));
-          return {
-            file: f,
-            name: f.replace(/\.html$/, '').replace(/[-_]/g, ' '),
-            modified: stat.mtime.toISOString(),
-            modifiedMs: stat.mtimeMs,
-            size: stat.size,
-            archived: false,
-          };
-        });
-      const archiveDir = path.join(MOCKUP_DIR, 'archive');
-      const archiveFiles = fs.existsSync(archiveDir)
-        ? fs.readdirSync(archiveDir)
-            .filter(f => f.endsWith('.html'))
-            .map(f => {
-              const stat = fs.statSync(path.join(archiveDir, f));
-              return {
-                file: f,
-                name: f.replace(/\.html$/, '').replace(/[-_]/g, ' '),
-                modified: stat.mtime.toISOString(),
-                modifiedMs: stat.mtimeMs,
-                size: stat.size,
-                archived: true,
-              };
-            })
-        : [];
-      const files = [...mainFiles, ...archiveFiles]
+      const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
+      res.setHeader('X-Mockup-Gallery-Layout', legacy ? 'flat' : 'sessions');
+
+      // HEAD: same headers, empty body.
+      if (req.method === 'HEAD') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end();
+      }
+
+      if (legacy) {
+        // Legacy flat behavior — preserved verbatim for single-session users.
+        const EXCLUDE = new Set(['gallery-v2.html', 'atomize-gallery.html', 'gallery.html', 'selected', 'archive']);
+        const mainFiles = fs.readdirSync(MOCKUP_DIR)
+          .filter(f => f.endsWith('.html') && !EXCLUDE.has(f))
+          .map(f => {
+            const stat = fs.statSync(path.join(MOCKUP_DIR, f));
+            return {
+              file: f,
+              name: f.replace(/\.html$/, '').replace(/[-_]/g, ' '),
+              modified: stat.mtime.toISOString(),
+              modifiedMs: stat.mtimeMs,
+              size: stat.size,
+              archived: false,
+            };
+          });
+        const archiveDir = path.join(MOCKUP_DIR, 'archive');
+        const archiveFiles = fs.existsSync(archiveDir)
+          ? fs.readdirSync(archiveDir)
+              .filter(f => f.endsWith('.html'))
+              .map(f => {
+                const stat = fs.statSync(path.join(archiveDir, f));
+                return {
+                  file: f,
+                  name: f.replace(/\.html$/, '').replace(/[-_]/g, ' '),
+                  modified: stat.mtime.toISOString(),
+                  modifiedMs: stat.mtimeMs,
+                  size: stat.size,
+                  archived: true,
+                };
+              })
+          : [];
+        const files = [...mainFiles, ...archiveFiles]
+          .sort((a, b) => b.modifiedMs - a.modifiedMs);
+        return json(res, files);
+      }
+
+      // Sessions layout — filter to currentSession (or ?session= override).
+      const queriedSlug = url.searchParams.get('session');
+      const slug = queriedSlug || sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+      if (!slug) return json(res, []);
+      if (!sessionStore.sessionExists(MOCKUP_DIR, slug)) {
+        return json(res, { error: `session not found: ${slug}` }, 404);
+      }
+      const listing = sessionStore.listSessionMockups(MOCKUP_DIR, slug);
+      const files = [...listing.main, ...listing.archive]
         .sort((a, b) => b.modifiedMs - a.modifiedMs);
       return json(res, files);
     } catch (e) {
@@ -450,38 +546,93 @@ function handler(req, res) {
     const filename = decodeURIComponent(pathname.slice('/mockup/'.length));
     // Safety: no path traversal
     if (filename.includes('..') || filename.includes('/')) return notFound(res);
-    const mainPath = path.join(MOCKUP_DIR, filename);
-    if (fs.existsSync(mainPath)) return serveFile(res, mainPath, 'text/html; charset=utf-8');
-    const archivePath = path.join(MOCKUP_DIR, 'archive', filename);
-    if (fs.existsSync(archivePath)) return serveFile(res, archivePath, 'text/html; charset=utf-8');
+
+    const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
+    if (legacy) {
+      const mainPath = path.join(MOCKUP_DIR, filename);
+      if (fs.existsSync(mainPath)) return serveFile(res, mainPath, 'text/html; charset=utf-8');
+      const archivePath = path.join(MOCKUP_DIR, 'archive', filename);
+      if (fs.existsSync(archivePath)) return serveFile(res, archivePath, 'text/html; charset=utf-8');
+      return notFound(res);
+    }
+
+    const queriedSlug = url.searchParams.get('session');
+    const slug = queriedSlug || sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+    if (!slug) return notFound(res, 'no current session');
+    const resolved = sessionStore.resolveMockupPath(MOCKUP_DIR, slug, filename);
+    if (resolved) return serveFile(res, resolved, 'text/html; charset=utf-8');
     return notFound(res);
   }
 
-  // GET /selected — return selected build
+  // GET /selected — return selected build (session-scoped when in v2 layout)
   if (req.method === 'GET' && pathname === '/selected') {
-    const data = readJsonFile(path.join(STORAGE_DIR, 'selected.json'));
-    return json(res, data || { pages: {}, components: {} });
+    const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
+    let selectedPath;
+    if (legacy) {
+      selectedPath = path.join(STORAGE_DIR, 'selected.json');
+    } else {
+      const slug = sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+      selectedPath = slug
+        ? path.join(STORAGE_DIR, 'sessions', slug, 'selected.json')
+        : null;
+    }
+    const data = selectedPath ? readJsonFile(selectedPath) : null;
+    return json(res, data || { pages: {}, components: {}, picks: [], saved: [] });
   }
 
   // POST /selected — update selected.json + copy files to selected/ folder
   if (req.method === 'POST' && pathname === '/selected') {
     readBody(req).then(body => {
       const data = JSON.parse(body);
-      fs.writeFileSync(path.join(STORAGE_DIR, 'selected.json'), JSON.stringify(data, null, 2), 'utf8');
+      const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
+      let selectedJsonPath;
+      let selectedDir;
+      let mockupBase;
+      if (legacy) {
+        selectedJsonPath = path.join(STORAGE_DIR, 'selected.json');
+        selectedDir = path.join(MOCKUP_DIR, 'selected');
+        mockupBase = MOCKUP_DIR;
+      } else {
+        const slug = sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+        if (!slug) return json(res, { error: 'no current session' }, 400);
+        const sessionStateDir = path.join(STORAGE_DIR, 'sessions', slug);
+        if (!fs.existsSync(sessionStateDir)) fs.mkdirSync(sessionStateDir, { recursive: true });
+        selectedJsonPath = path.join(sessionStateDir, 'selected.json');
+        mockupBase = path.join(MOCKUP_DIR, 'sessions', slug);
+        selectedDir = path.join(mockupBase, 'selected');
+      }
+      fs.writeFileSync(selectedJsonPath, JSON.stringify(data, null, 2), 'utf8');
       fs.writeFileSync(path.join(STORAGE_DIR, 'last-change.json'), JSON.stringify({
         timestamp: new Date().toISOString(), source: 'selected-update'
       }));
       // Copy selected source files to selected/ folder
-      const selectedDir = path.join(MOCKUP_DIR, 'selected');
       if (!fs.existsSync(selectedDir)) fs.mkdirSync(selectedDir, { recursive: true });
       // Clear old selected files
       try { fs.readdirSync(selectedDir).forEach(f => fs.unlinkSync(path.join(selectedDir, f))); } catch {}
-      // Copy current selections
+      // Copy current selections — each route may hold an array of candidates
+      // (new shape) or a single object (legacy shape).
       if (data.pages) {
-        for (const [route, info] of Object.entries(data.pages)) {
-          const src = path.join(MOCKUP_DIR, info.source);
-          if (fs.existsSync(src)) {
-            fs.copyFileSync(src, path.join(selectedDir, info.source));
+        const copied = new Set();
+        for (const [route, value] of Object.entries(data.pages)) {
+          const entries = Array.isArray(value) ? value : (value ? [value] : []);
+          for (const info of entries) {
+            if (!info || !info.source || copied.has(info.source)) continue;
+            const src = path.join(mockupBase, info.source);
+            if (fs.existsSync(src)) {
+              fs.copyFileSync(src, path.join(selectedDir, info.source));
+              copied.add(info.source);
+            }
+          }
+        }
+      }
+      // Also copy any picks (pending, not yet assigned) so they're available
+      if (Array.isArray(data.picks)) {
+        for (const pick of data.picks) {
+          if (!pick || !pick.source) continue;
+          const src = path.join(mockupBase, pick.source);
+          const dest = path.join(selectedDir, pick.source);
+          if (fs.existsSync(src) && !fs.existsSync(dest)) {
+            try { fs.copyFileSync(src, dest); } catch {}
           }
         }
       }
@@ -503,11 +654,19 @@ function handler(req, res) {
     return;
   }
 
-  // POST /save
+  // POST /save — write selections for the current session
   if (req.method === 'POST' && pathname === '/save') {
     readBody(req).then(body => {
-      const dest = path.join(STORAGE_DIR, 'selections.json');
-      fs.writeFileSync(dest, body, 'utf8');
+      const parsed = JSON.parse(body);
+      const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
+      if (legacy) {
+        const dest = path.join(STORAGE_DIR, 'selections.json');
+        fs.writeFileSync(dest, JSON.stringify(parsed, null, 2), 'utf8');
+      } else {
+        const slug = sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+        if (!slug) return json(res, { error: 'no current session' }, 400);
+        sessionStore.writeSessionSelections(STORAGE_DIR, slug, parsed);
+      }
       // Write change marker so Claude Code can detect updates
       fs.writeFileSync(path.join(STORAGE_DIR, 'last-change.json'), JSON.stringify({
         timestamp: new Date().toISOString(),
@@ -518,10 +677,21 @@ function handler(req, res) {
     return;
   }
 
-  // GET /selections
+  // GET /selections — read selections for the current session
   if (req.method === 'GET' && pathname === '/selections') {
-    const data = readJsonFile(path.join(STORAGE_DIR, 'selections.json'));
-    return json(res, data || {});
+    const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
+    if (legacy) {
+      const data = readJsonFile(path.join(STORAGE_DIR, 'selections.json'));
+      return json(res, data || {});
+    }
+    const queriedSlug = url.searchParams.get('session');
+    const slug = queriedSlug || sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+    if (!slug) return json(res, {});
+    try {
+      return json(res, sessionStore.readSessionSelections(STORAGE_DIR, slug));
+    } catch (e) {
+      return json(res, { error: e.message }, 500);
+    }
   }
 
   // GET /accepted
@@ -538,12 +708,21 @@ function handler(req, res) {
     return json(res, { projectName, lastChange, lastChangeISO: new Date(lastChange).toISOString() });
   }
 
-  // POST /archive/<filename> — move to archive subfolder
+  // POST /archive/<filename> — move to archive subfolder (within current session)
   if (req.method === 'POST' && pathname.startsWith('/archive/')) {
     const filename = decodeURIComponent(pathname.slice('/archive/'.length));
     if (filename.includes('..') || filename.includes('/')) return json(res, { error: 'invalid filename' }, 400);
-    const src = path.join(MOCKUP_DIR, filename);
-    const archiveDir = path.join(MOCKUP_DIR, 'archive');
+    const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
+    let base;
+    if (legacy) {
+      base = MOCKUP_DIR;
+    } else {
+      const slug = sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+      if (!slug) return json(res, { error: 'no current session' }, 400);
+      base = path.join(MOCKUP_DIR, 'sessions', slug);
+    }
+    const src = path.join(base, filename);
+    const archiveDir = path.join(base, 'archive');
     const dest = path.join(archiveDir, filename);
     if (!fs.existsSync(src)) return json(res, { error: 'file not found' }, 404);
     if (!fs.existsSync(archiveDir)) fs.mkdirSync(archiveDir, { recursive: true });
@@ -551,15 +730,152 @@ function handler(req, res) {
     return json(res, { ok: true, archived: filename });
   }
 
-  // POST /unarchive/<filename> — move back from archive
+  // POST /unarchive/<filename> — move back from archive (within current session)
   if (req.method === 'POST' && pathname.startsWith('/unarchive/')) {
     const filename = decodeURIComponent(pathname.slice('/unarchive/'.length));
     if (filename.includes('..') || filename.includes('/')) return json(res, { error: 'invalid filename' }, 400);
-    const src = path.join(MOCKUP_DIR, 'archive', filename);
-    const dest = path.join(MOCKUP_DIR, filename);
+    const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
+    let base;
+    if (legacy) {
+      base = MOCKUP_DIR;
+    } else {
+      const slug = sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+      if (!slug) return json(res, { error: 'no current session' }, 400);
+      base = path.join(MOCKUP_DIR, 'sessions', slug);
+    }
+    const src = path.join(base, 'archive', filename);
+    const dest = path.join(base, filename);
     if (!fs.existsSync(src)) return json(res, { error: 'file not found in archive' }, 404);
     fs.renameSync(src, dest);
     return json(res, { ok: true, unarchived: filename });
+  }
+
+  // ── Session management routes ─────────────────────────────────────────
+
+  // GET /sessions — list all sessions (v2 layout only; legacy returns empty)
+  if (req.method === 'GET' && pathname === '/sessions') {
+    try {
+      const sessions = sessionStore.listSessions(MOCKUP_DIR, STORAGE_DIR);
+      const state = sessionStore.readState(STORAGE_DIR);
+      const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
+      return json(res, {
+        sessions,
+        currentSession: state.currentSession,
+        layout: legacy ? 'flat' : 'sessions',
+        needsMigration: legacy,
+      });
+    } catch (e) {
+      return json(res, { error: e.message }, 500);
+    }
+  }
+
+  // GET /session/<slug> — read one session's metadata
+  if (req.method === 'GET' && pathname.startsWith('/session/')) {
+    const slug = decodeURIComponent(pathname.slice('/session/'.length));
+    if (!slug) return json(res, { error: 'slug required' }, 400);
+    try {
+      // slugIsValid check happens inside readSession/assertSlug
+      const session = sessionStore.readSession(MOCKUP_DIR, slug);
+      return json(res, session);
+    } catch (e) {
+      return json(res, { error: e.message }, /Invalid session slug/.test(e.message) ? 400 : 404);
+    }
+  }
+
+  // POST /session/switch — { slug } → sets state.currentSession
+  if (req.method === 'POST' && pathname === '/session/switch') {
+    readBody(req).then(body => {
+      let parsed;
+      try { parsed = JSON.parse(body || '{}'); } catch { return json(res, { error: 'invalid json body' }, 400); }
+      const slug = parsed && parsed.slug;
+      if (!slug) return json(res, { error: 'slug required' }, 400);
+      try {
+        const state = sessionStore.setCurrentSession(MOCKUP_DIR, STORAGE_DIR, slug);
+        return json(res, { ok: true, currentSession: state.currentSession });
+      } catch (e) {
+        return json(res, { error: e.message }, /Invalid session slug/.test(e.message) ? 400 : 404);
+      }
+    }).catch(e => json(res, { error: e.message }, 500));
+    return;
+  }
+
+  // POST /session/create — { name, goal?, tags?, slug? } → creates session
+  if (req.method === 'POST' && pathname === '/session/create') {
+    readBody(req).then(body => {
+      let parsed;
+      try { parsed = JSON.parse(body || '{}'); } catch { return json(res, { error: 'invalid json body' }, 400); }
+      if (!parsed || typeof parsed.name !== 'string' || !parsed.name.trim()) {
+        return json(res, { error: 'name required' }, 400);
+      }
+      try {
+        const session = sessionStore.createSession(MOCKUP_DIR, STORAGE_DIR, {
+          name: parsed.name,
+          goal: parsed.goal,
+          tags: parsed.tags,
+          slug: parsed.slug,
+        });
+        fs.writeFileSync(path.join(STORAGE_DIR, 'last-change.json'), JSON.stringify({
+          timestamp: new Date().toISOString(),
+          source: 'session-create',
+          slug: session.slug,
+        }));
+        return json(res, { ok: true, session });
+      } catch (e) {
+        const code = /Invalid session slug|already exists|name is required/.test(e.message) ? 400 : 500;
+        return json(res, { error: e.message }, code);
+      }
+    }).catch(e => json(res, { error: e.message }, 500));
+    return;
+  }
+
+  // POST /session/<slug>/status — { status } → updates session.json status
+  if (req.method === 'POST' && /^\/session\/[^/]+\/status$/.test(pathname)) {
+    const slug = decodeURIComponent(pathname.split('/')[2]);
+    readBody(req).then(body => {
+      let parsed;
+      try { parsed = JSON.parse(body || '{}'); } catch { return json(res, { error: 'invalid json body' }, 400); }
+      const status = parsed && parsed.status;
+      if (!['active', 'decided', 'stale', 'superseded'].includes(status)) {
+        return json(res, { error: 'status must be one of active|decided|stale|superseded' }, 400);
+      }
+      try {
+        const session = sessionStore.readSession(MOCKUP_DIR, slug);
+        session.status = status;
+        session.updatedAt = new Date().toISOString();
+        sessionStore.writeSession(MOCKUP_DIR, slug, session);
+        return json(res, { ok: true, session });
+      } catch (e) {
+        return json(res, { error: e.message }, /Invalid session slug/.test(e.message) ? 400 : 404);
+      }
+    }).catch(e => json(res, { error: e.message }, 500));
+    return;
+  }
+
+  // POST /session/<slug>/supersede — { supersededBy } → mark superseded
+  if (req.method === 'POST' && /^\/session\/[^/]+\/supersede$/.test(pathname)) {
+    const slug = decodeURIComponent(pathname.split('/')[2]);
+    readBody(req).then(body => {
+      let parsed;
+      try { parsed = JSON.parse(body || '{}'); } catch { return json(res, { error: 'invalid json body' }, 400); }
+      const supersededBy = parsed && parsed.supersededBy;
+      if (typeof supersededBy !== 'string' || !supersededBy) {
+        return json(res, { error: 'supersededBy required' }, 400);
+      }
+      if (!sessionStore.sessionExists(MOCKUP_DIR, supersededBy)) {
+        return json(res, { error: `supersededBy session does not exist: ${supersededBy}` }, 400);
+      }
+      try {
+        const session = sessionStore.readSession(MOCKUP_DIR, slug);
+        session.status = 'superseded';
+        session.supersededBy = supersededBy;
+        session.updatedAt = new Date().toISOString();
+        sessionStore.writeSession(MOCKUP_DIR, slug, session);
+        return json(res, { ok: true, session });
+      } catch (e) {
+        return json(res, { error: e.message }, /Invalid session slug/.test(e.message) ? 400 : 404);
+      }
+    }).catch(e => json(res, { error: e.message }, 500));
+    return;
   }
 
   // GET /implemented
@@ -625,13 +941,28 @@ function handler(req, res) {
         ratings.push(entry);
       }
 
-      // Build selections map from selected.json pages
+      // Build selections map from selected.json pages — each route holds an
+      // array of candidate entries (new shape); tolerate legacy single-object shape.
       const selectionMap = {};
       if (selected.pages) {
-        for (const [route, info] of Object.entries(selected.pages)) {
-          selectionMap[route] = { mockup: info.source || null, note: info.note || null };
+        for (const [route, value] of Object.entries(selected.pages)) {
+          const entries = Array.isArray(value) ? value : (value ? [value] : []);
+          selectionMap[route] = entries.map(info => ({
+            mockup: info?.source || null,
+            note: info?.note || null,
+            changeNote: info?.changeNote || null,
+            status: info?.status || null,
+            primary: !!info?.primary,
+          }));
         }
       }
+
+      // Picks — mockups selected for review, not yet assigned to a route
+      const picks = Array.isArray(selected.picks) ? selected.picks.map(p => ({
+        mockup: p?.source || null,
+        pickedAt: p?.pickedAt || null,
+        note: p?.note || null,
+      })) : [];
 
       // Summary counts
       const yayCount      = ratings.filter(r => r.rating === 'yay').length;
@@ -648,7 +979,8 @@ function handler(req, res) {
         project: projectName,
         ratings,
         selections: selectionMap,
-        summary: `${ratings.length} rated (${yayCount} yay, ${nayCount} nay, ${unratedCount} unrated), ${pageCount} page${pageCount !== 1 ? 's' : ''} selected, ${commentCount} comment${commentCount !== 1 ? 's' : ''}`,
+        picks,
+        summary: `${ratings.length} rated (${yayCount} yay, ${nayCount} nay, ${unratedCount} unrated), ${pageCount} page${pageCount !== 1 ? 's' : ''} selected, ${picks.length} pick${picks.length !== 1 ? 's' : ''}, ${commentCount} comment${commentCount !== 1 ? 's' : ''}`,
       };
 
       const dest = path.join(STORAGE_DIR, 'pending-review.json');
@@ -694,11 +1026,18 @@ function tryListen(port) {
     console.log(`  Project:  ${PROJECT_ROOT}`);
     console.log(`  Mockups:  ${MOCKUP_DIR}`);
     console.log(`  Storage:  ${STORAGE_DIR}`);
-    // Try to open browser
-    try {
-      const cmd = process.platform === 'darwin' ? 'open' : 'xdg-open';
-      execSync(`${cmd} ${url}`, { stdio: 'ignore' });
-    } catch {}
+    // Auto-open browser unless suppressed via --no-open flag, NODE_ENV=test,
+    // or MOCKUP_GALLERY_NO_OPEN env var. Useful for tests, CI, headless usage.
+    const suppressOpen =
+      argv.includes('--no-open') ||
+      process.env.NODE_ENV === 'test' ||
+      process.env.MOCKUP_GALLERY_NO_OPEN === '1';
+    if (!suppressOpen) {
+      try {
+        const cmd = process.platform === 'darwin' ? 'open' : 'xdg-open';
+        execSync(`${cmd} ${url}`, { stdio: 'ignore' });
+      } catch {}
+    }
   });
 }
 
