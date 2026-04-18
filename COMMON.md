@@ -72,6 +72,22 @@ Review data lives in `.mockup-gallery/` inside each project root. Mockup HTML fi
 }
 ```
 
+#### Implementation Tracking Fields (via `POST /session/mark-implemented`)
+
+Entries written by the mark-implemented endpoint include:
+
+- `implemented` (boolean) — Whether the mockup has been built
+- `implementedAt` (ISO string) — When it was marked as implemented
+- `commitRef` (string, optional) — Git commit hash reference
+- `status` (string) — Set to `"implemented"` for consistency with the component-level tracking
+
+### Mockup Variant Fields (via `GET /mockups`)
+
+When filenames contain dark/light variants (e.g., `dashboard-dark.html` and `dashboard-light.html`), the `/mockups` response annotates each mockup:
+
+- `variant` (string) — `"dark"` or `"light"` when detected
+- `pairedWith` (string) — Filename of the counterpart variant, or `undefined` if no pair
+
 ### accepted-designs.json — Approved/Rejected Patterns
 
 ```json

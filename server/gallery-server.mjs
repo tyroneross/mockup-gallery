@@ -66,6 +66,32 @@ if (!fs.existsSync(STORAGE_DIR)) {
   }
 }
 
+// ── Variant detection ────────────────────────────────────────────────────
+// Annotates a mockups array in-place with { variant, pairedWith } fields.
+// A pair is two files sharing a common base where one has "dark" and the
+// other has "light" in the filename (separated by - or _).
+function detectVariants(mockups) {
+  const pairs = new Map();
+  for (const m of mockups) {
+    const base = m.file.replace(/[-_](dark|light)([-_]mode)?\.html$/i, '');
+    const isDark  = /[-_]dark/i.test(m.file);
+    const isLight = /[-_]light/i.test(m.file);
+    if (isDark || isLight) {
+      if (!pairs.has(base)) pairs.set(base, {});
+      pairs.get(base)[isDark ? 'dark' : 'light'] = m.file;
+    }
+  }
+  for (const m of mockups) {
+    const base = m.file.replace(/[-_](dark|light)([-_]mode)?\.html$/i, '');
+    const pair = pairs.get(base);
+    if (pair && (pair.dark || pair.light)) {
+      const isDark = /[-_]dark/i.test(m.file);
+      m.variant    = isDark ? 'dark' : 'light';
+      m.pairedWith = isDark ? pair.light : pair.dark;
+    }
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -522,6 +548,7 @@ function handler(req, res) {
           : [];
         const files = [...mainFiles, ...archiveFiles]
           .sort((a, b) => b.modifiedMs - a.modifiedMs);
+        detectVariants(files);
         return json(res, files);
       }
 
@@ -535,6 +562,7 @@ function handler(req, res) {
       const listing = sessionStore.listSessionMockups(MOCKUP_DIR, slug);
       const files = [...listing.main, ...listing.archive]
         .sort((a, b) => b.modifiedMs - a.modifiedMs);
+      detectVariants(files);
       return json(res, files);
     } catch (e) {
       return json(res, { error: e.message }, 500);
@@ -905,6 +933,30 @@ function handler(req, res) {
       existing[file].date = new Date().toISOString().split('T')[0];
       fs.writeFileSync(filePath, JSON.stringify(existing, null, 2));
       json(res, { ok: true, implemented: existing[file] });
+    }).catch(e => json(res, { error: e.message }, 500));
+    return;
+  }
+
+  // POST /session/mark-implemented — mark a mockup as built, with optional commitRef
+  if (req.method === 'POST' && pathname === '/session/mark-implemented') {
+    readBody(req).then(body => {
+      let parsed;
+      try { parsed = JSON.parse(body || '{}'); } catch { return json(res, { error: 'invalid json body' }, 400); }
+      const { file, commitRef } = parsed || {};
+      if (!file) return json(res, { error: 'file required' }, 400);
+
+      const filePath = path.join(STORAGE_DIR, 'implemented.json');
+      const existing = readJsonFile(filePath) || {};
+      if (!existing[file]) existing[file] = {};
+      existing[file].implemented    = true;
+      existing[file].implementedAt  = new Date().toISOString();
+      if (commitRef) existing[file].commitRef = commitRef;
+      // Ensure status field is consistent with the richer /implement endpoint
+      existing[file].status = 'implemented';
+      existing[file].date   = new Date().toISOString().split('T')[0];
+
+      fs.writeFileSync(filePath, JSON.stringify(existing, null, 2));
+      json(res, { ok: true, file, implemented: true });
     }).catch(e => json(res, { error: e.message }, 500));
     return;
   }

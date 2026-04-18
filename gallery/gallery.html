@@ -197,6 +197,54 @@
     .share-btn:hover { background: rgba(240,182,94,0.2); border-color: rgba(240,182,94,0.35); }
     .share-btn.shared { background: rgba(123,198,126,0.12); color: #7bc67e; border-color: rgba(123,198,126,0.2); pointer-events: none; }
 
+    /* Compare dark/light button */
+    .compare-btn {
+      width: auto; padding: 0 10px; height: 28px; display: flex; align-items: center; justify-content: center;
+      background: rgba(34,211,238,0.06); border: 0.5px solid rgba(34,211,238,0.25);
+      border-radius: 6px; cursor: pointer; color: #67e8f9; font-size: 11px; font-weight: 500;
+      transition: all 0.12s; white-space: nowrap;
+    }
+    .compare-btn:hover { background: rgba(34,211,238,0.12); border-color: rgba(34,211,238,0.45); color: #a5f3fc; }
+    .compare-btn.is-hidden { display: none; }
+
+    /* Compare overlay */
+    .compare-overlay { position: fixed; inset: 0; z-index: 1000; background: #111; display: flex; flex-direction: column; }
+    .compare-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 24px; background: #1a1a2e; color: #e0e0e8; font-size: 14px; font-weight: 500;
+      border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    }
+    .compare-header-label { display: flex; align-items: center; gap: 8px; }
+    .compare-header-badge {
+      font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .compare-header-badge.dark  { background: rgba(99,102,241,0.15); color: #818cf8; border: 0.5px solid rgba(99,102,241,0.3); }
+    .compare-header-badge.light { background: rgba(251,191,36,0.12); color: #fbbf24; border: 0.5px solid rgba(251,191,36,0.3); }
+    .compare-close-btn {
+      background: rgba(255,255,255,0.06); color: #c0c0cc; border: 0.5px solid rgba(255,255,255,0.1);
+      padding: 5px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;
+      transition: all 0.12s;
+    }
+    .compare-close-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .compare-frames { display: flex; flex: 1; gap: 2px; overflow: hidden; }
+    .compare-frames iframe { flex: 1; border: none; background: #fff; }
+
+    /* Mark implemented button (shown on selected items in sidebar) */
+    .ni-mark-impl-btn {
+      font-size: 9px; color: rgba(52,211,153,0.5); cursor: pointer; flex-shrink: 0;
+      padding: 0 3px; transition: color 0.12s; white-space: nowrap;
+    }
+    .ni-mark-impl-btn:hover { color: #34d399; }
+
+    /* Variant badge in sidebar */
+    .ni-variant {
+      font-size: 8px; font-weight: 600; padding: 1px 4px; border-radius: 3px;
+      flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .ni-variant-dark  { color: #818cf8; background: rgba(129,140,248,0.12); }
+    .ni-variant-light { color: #fbbf24; background: rgba(251,191,36,0.10); }
+
     /* Route picker modal */
     .route-modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200;
@@ -662,6 +710,7 @@
       <button class="select-btn" id="select-btn" title="Pick this mockup for review">Select</button>
       <button class="confirm-btn" id="confirm-btn" title="Confirm your selected picks" disabled>Confirm</button>
       <div class="rating-group" id="page-rating"></div>
+      <button class="compare-btn is-hidden" id="compare-btn" title="Compare dark/light variants side by side">Compare</button>
       <button class="archive-btn" id="archive-btn" title="Archive this mockup">Archive</button>
       <button class="refresh-btn" id="refresh-btn" title="Clear notes on unrated mockups">Refresh</button>
       <button class="share-btn" id="share-btn" title="Share ratings and feedback with Claude Code">Share with Claude</button>
@@ -940,6 +989,64 @@ async function archiveCurrent() {
   if (M.length === 0) return;
   await fetch('/archive/' + encodeURIComponent(M[S.cur].file), { method: 'POST' });
   location.reload();
+}
+
+// -- Compare dark/light variants ------------------------------------------
+function compareVariants(fileA, fileB) {
+  // Remove any existing overlay first
+  const existing = document.querySelector('.compare-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'compare-overlay';
+
+  const variantA = /[-_]dark/i.test(fileA) ? 'dark' : 'light';
+  const variantB = /[-_]dark/i.test(fileB) ? 'dark' : 'light';
+
+  overlay.innerHTML = `
+    <div class="compare-header">
+      <div class="compare-header-label">
+        <span class="compare-header-badge ${variantA}">${variantA}</span>
+        <span style="color:#5a5a72;font-size:12px;">${esc(fileA)}</span>
+      </div>
+      <button class="compare-close-btn" onclick="this.closest('.compare-overlay').remove()">Close</button>
+      <div class="compare-header-label" style="justify-content:flex-end;">
+        <span style="color:#5a5a72;font-size:12px;">${esc(fileB)}</span>
+        <span class="compare-header-badge ${variantB}">${variantB}</span>
+      </div>
+    </div>
+    <div class="compare-frames">
+      <iframe src="/mockup/${encodeURIComponent(fileA)}" loading="eager"></iframe>
+      <iframe src="/mockup/${encodeURIComponent(fileB)}" loading="eager"></iframe>
+    </div>
+  `;
+
+  // Close on Escape
+  const onKey = (e) => { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onKey); } };
+  document.addEventListener('keydown', onKey);
+
+  document.body.appendChild(overlay);
+}
+
+// -- Mark implemented via /session/mark-implemented -----------------------
+async function markImplemented(file) {
+  try {
+    const res = await fetch('/session/mark-implemented', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file }),
+    });
+    if (!res.ok) throw new Error('request failed');
+    // Update local implData so the sidebar re-renders immediately
+    if (!implData[file]) implData[file] = {};
+    implData[file].implemented   = true;
+    implData[file].implementedAt = new Date().toISOString();
+    implData[file].status        = 'implemented';
+    render();
+    flash('save-status', 'Marked implemented', '#34d399');
+  } catch {
+    flash('save-status', 'Failed to mark implemented', '#fb7185');
+  }
 }
 
 // -- Selected Build actions -----------------------------------------------
@@ -1557,11 +1664,29 @@ function render() {
       const idx = fileIdx[x.file];
       const age = relAge(x.modifiedMs);
       const hasNote = S.notes[x.file];
+      const impl = implData[x.file];
+      const isImpl = impl && (impl.implemented || impl.status === 'implemented');
+      const isPartial = impl && impl.status === 'partial' && !isImpl;
+      let implBadge = '';
+      if (isImpl) {
+        implBadge = `<span class="ni-impl ni-impl-done" title="Implemented ${impl.implementedAt ? 'on ' + impl.implementedAt.split('T')[0] : ''}">&#10003;</span>`;
+      } else if (isPartial) {
+        implBadge = `<span class="ni-impl ni-impl-partial" title="Partially implemented">partial</span>`;
+      }
+      const variantBadge = x.variant
+        ? `<span class="ni-variant ni-variant-${x.variant}">${x.variant}</span>`
+        : '';
+      const markBtn = !isImpl
+        ? `<span class="ni-mark-impl-btn" onclick="event.stopPropagation();markImplemented('${esc(x.file)}')" title="Mark as implemented">impl</span>`
+        : '';
       nh += `<div class="nav-item${idx === S.cur ? ' active' : ''}" onclick="go(${idx})">
         <span class="ni-dot ${dotClass(x.file)}"></span>
         <span class="ni-name">${esc(x.name)}</span>
+        ${variantBadge}
+        ${implBadge}
         ${hasNote ? `<span class="ni-note" title="${esc(hasNote)}">&#9998;</span>` : ''}
         ${age ? `<span class="ni-age">${age}</span>` : ''}
+        ${markBtn}
       </div>`;
     });
     nh += '</div>';
@@ -1619,6 +1744,20 @@ function render() {
   document.getElementById('pos-ct').textContent = `${S.cur + 1} / ${M.length}`;
   document.getElementById('prev-btn').disabled = S.cur === 0;
   document.getElementById('next-btn').disabled = S.cur === M.length - 1;
+
+  // Compare button — show only when current mockup has a paired variant
+  const compareBtn = document.getElementById('compare-btn');
+  if (compareBtn) {
+    if (m.pairedWith) {
+      compareBtn.classList.remove('is-hidden');
+      const variantLabel = m.variant ? m.variant.charAt(0).toUpperCase() + m.variant.slice(1) : 'Compare';
+      compareBtn.textContent = `Compare ${variantLabel === 'Dark' ? 'Dark/Light' : 'Light/Dark'}`;
+      compareBtn.onclick = () => compareVariants(m.file, m.pairedWith);
+    } else {
+      compareBtn.classList.add('is-hidden');
+      compareBtn.onclick = null;
+    }
+  }
 
   // Page-level rating: Yay / Nay only
   const pg = document.getElementById('page-rating');
@@ -2194,6 +2333,7 @@ document.getElementById('save-btn').addEventListener('click', toggleSaveForLater
 document.getElementById('select-btn').addEventListener('click', togglePickCurrent);
 document.getElementById('confirm-btn').addEventListener('click', openConfirmModal);
 document.getElementById('archive-btn').addEventListener('click', archiveCurrent);
+// compare-btn onclick is set dynamically in render() based on current mockup's pairedWith
 document.getElementById('refresh-btn').addEventListener('click', refreshUnrated);
 document.getElementById('share-btn').addEventListener('click', async () => {
   const btn = document.getElementById('share-btn');
