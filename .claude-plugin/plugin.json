@@ -1,9 +1,14 @@
 {
   "name": "mockup-gallery",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Visual mockup review gallery with component-level ratings, auto-save to file, and Claude Code integration. Launch with /mockup-review.",
   "author": {
     "name": "Tyrone Ross"
   },
-  "keywords": ["design-review", "mockups", "ui", "claude-code"]
+  "keywords": [
+    "design-review",
+    "mockups",
+    "ui",
+    "claude-code"
+  ]
 }
