@@ -75,8 +75,8 @@ Or add to `.claude/plugins.json`:
 ### Plugin Features
 
 - **SessionStart hook** — Shows design review status (ratings, pending items, implementation progress)
-- **`/mockup-review`** — Opens the gallery server from Claude Code
-- **`/mockup-status`** — Shows current review status inline
+- **`/mockup-gallery`** — Single Claude Code entry point for launch, status, feedback, sessions, selected-build handoff, implementation guidance, and sync checks
+- **Implementation handoff guidance** — Before coding selected UI, Claude can use `/mockup-gallery implement` or `/mockup-gallery handoff` to map changed UI elements to static/dynamic data, actions, connectors, visualizations, and unresolved questions
 
 ## Data Storage
 
@@ -103,3 +103,16 @@ mockups/
 ```
 
 Mockups are plain HTML files — build them however you like. The gallery serves them in an iframe.
+
+## Codex
+
+This package now ships an additive Codex plugin surface alongside the existing Claude Code package. The Claude package remains authoritative for Claude behavior; the Codex package adds a parallel `.codex-plugin/plugin.json` install surface without changing the Claude runtime.
+
+Package root for Codex installs:
+- the repository root (`.`)
+
+Primary Codex surface:
+- skills from `(none)` when present
+- MCP config from `(none)` when present
+
+Install the package from this package root using your current Codex plugin install flow. The Codex package is additive only: Claude-specific hooks, slash commands, and agent wiring remain unchanged for Claude Code.

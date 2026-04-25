@@ -10,18 +10,15 @@ claude plugin add /path/to/mockup-gallery
 
 ## Commands
 
+Use `/mockup-gallery` as the single slash command. It provides capability guidance and routes launch, feedback, session, memory, implementation handoff, and sync requests.
+
 | Command | Purpose |
 |---------|---------|
-| `/mockup-review` | Launch gallery server for the current project |
-| `/mockup-status` | Show review progress inline |
-| `/mockup-feedback` | Pull latest ratings, comments, selections (session-scoped) |
-| `/mockup-selections` | Full structured output of all design decisions |
-| `/mockup-memories` | Show global + project-specific design memories |
-| `/mockup-memories promote` | Promote a learning to global or project memory |
-| `/mockup-session-list` | List all review sessions for the current project |
-| `/mockup-session-new` | Create a new review session and make it current |
-| `/mockup-session-archive` | Archive a session as decided, stale, or superseded |
-| `/mockup-gallery:sync` | Check alignment between COMMON.md, CLAUDE.md, AGENTS.md |
+| `/mockup-gallery` | Main entry point: launch review, read state, manage sessions, prepare implementation handoff, or choose a capability |
+
+## Data Files
+
+Review state lives in `.mockup-gallery/`: `selections.json`, `selected.json`, `implemented.json`, and `accepted-designs.json`. Mockup HTML uses `data-component` attributes for component-level review. Selected page entries may include `changeNote`; when present, implement only that described change.
 
 ## Hooks
 
@@ -38,6 +35,14 @@ claude plugin add /path/to/mockup-gallery
 
 **mockup-review** — Full design review workflow: creating mockups, reading feedback, iterating, consolidating approved designs. Load this skill before creating or implementing mockups.
 
+## Implementation Handoff
+
+Before implementing selected UI, use `/mockup-gallery implement` or `/mockup-gallery handoff`. Claude should read selected mockups, identify every changed UI element, classify each as static, dynamic, computed, user input, action, or unknown, and capture data sources, field paths, connector/API contracts, loading/empty/error states, visualizations, and unresolved questions before coding.
+
+## Scratch-First Mockups
+
+Every new review batch should start with a low-fidelity black-and-white scratch mockup. Use it to decide major layout, hierarchy, flow, and content changes quickly with fewer tokens before making higher-fidelity variants. Name it with a prefix such as `00-scratch-`, `01-scratch-`, `lo-fi-`, or `wireframe-` so the gallery prioritizes it first.
+
 ## Memories
 
 Global memories live in the plugin repo under `memories/`.
@@ -46,7 +51,7 @@ Global memories live in the plugin repo under `memories/`.
 - `memories/global/implementation-lessons.md` — What worked/failed across projects
 - `memories/projects/<name>/design-preferences.md` — Project-specific overrides
 
-Use `/mockup-memories` to view. Use `/mockup-memories promote` to promote local learnings.
+Use `/mockup-gallery memories` to view. Use `/mockup-gallery promote memory` to promote local learnings.
 
 Per-project memories override global when both address the same topic.
 
@@ -82,6 +87,6 @@ session's mockup folder, not inside `.mockup-gallery/`.
 - `stale` — no longer relevant, abandoned without a decision
 - `superseded` — replaced by a newer session (records the superseding slug)
 
-**Migration from flat layout.** Legacy projects with `mockups/*.html` at the root still work unchanged (`layout: "flat"`). The first time the user runs `/mockup-session-new`, the server prompts to migrate existing flat mockups into a starter session. Migration is non-destructive: files are moved, not copied-then-deleted, and the gallery rolls back if anything fails.
+**Migration from flat layout.** Legacy projects with `mockups/*.html` at the root still work unchanged (`layout: "flat"`). The first time the user creates a session through `/mockup-gallery`, the server prompts to migrate existing flat mockups into a starter session. Migration is non-destructive: files are moved, not copied-then-deleted, and the gallery rolls back if anything fails.
 
-**Slash commands.** Use `/mockup-session-list` to see every session grouped by status, `/mockup-session-new` to create one, and `/mockup-session-archive` to retire one. Sessions are opt-in — if a project never creates one, it stays in flat mode forever and every existing command keeps working.
+**Slash command.** Use `/mockup-gallery sessions` to see every session grouped by status, `/mockup-gallery new session` to create one, and `/mockup-gallery archive session` to retire one. Sessions are opt-in — if a project never creates one, it stays in flat mode forever.

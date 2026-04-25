@@ -2,7 +2,6 @@
 name: mockup-gallery
 description: Single entry point for mockup-gallery. Use this command to launch review, inspect state, manage sessions, prepare implementation handoff, or decide which mockup-gallery capability to use.
 argument-hint: "[goal: launch | status | feedback | sessions | implement | handoff | help]"
-user_invocable: true
 ---
 
 # /mockup-gallery
@@ -64,15 +63,7 @@ Read state in this order:
    - `.mockup-gallery/accepted-designs.json`
    - `.mockup-gallery/last-change.json`
 
-Summarize:
-
-- reviewed counts: yay, nay, unrated
-- selected pages and candidates
-- unassigned picks
-- saved items
-- pending `changeNote` items
-- implemented/done items
-- actionable user notes
+Summarize reviewed counts, selected pages and candidates, unassigned picks, saved items, pending `changeNote` items, implemented/done items, and actionable user notes.
 
 ## Implementation Handoff
 
@@ -91,20 +82,8 @@ Use this before implementing selected UI. Do not treat a visual mockup alone as 
    - `userInput` — field/control users edit
    - `action` — click/submit/navigation/mutation/export/share/open modal
    - `unknown` — cannot infer; must be asked before implementation unless explicitly placeholder
-5. For dynamic/computed/input/action elements, capture:
-   - UI location and component
-   - source type: api, store, db, local, prop, static, unknown
-   - source name/path and field path
-   - input schema or output schema when known
-   - loading, empty, error, and success behavior
-   - connector/API contract if needed: method, path, params, body, response, auth, errors
-   - visualization encoding for charts: data, mark, x/y/color/size, aggregation, tooltip
-6. Produce an implementation handoff summary with:
-   - ready-to-build items
-   - unresolved questions
-   - assumptions
-   - source mockups to inspect
-   - files likely to change after codebase inspection
+5. For dynamic/computed/input/action elements, capture source, field path, schemas when known, loading/empty/error/success behavior, connector/API contract, and visualization encoding for charts.
+6. Produce an implementation handoff summary with ready-to-build items, unresolved questions, assumptions, source mockups, and files likely to change after codebase inspection.
 
 If the handoff reveals unknown data sources or side effects, ask concise questions before coding.
 

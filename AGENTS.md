@@ -40,6 +40,8 @@ HTML mockup files live in the project (not in `.mockup-gallery/`). Check these d
 ## Creating Mockups
 
 Follow the format in COMMON.md:
+- First create a low-fidelity black-and-white scratch mockup for big layout, flow, hierarchy, and content decisions before higher-fidelity variants.
+- Use a filename prefix such as `00-scratch-`, `01-scratch-`, `lo-fi-`, or `wireframe-` so the gallery shows it first.
 - Self-contained HTML with Tailwind CDN
 - `data-component` attributes on every distinct section
 - Visible component labels

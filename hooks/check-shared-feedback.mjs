@@ -17,6 +17,9 @@ try { unlinkSync(pendingPath); } catch { /* ignore */ }
 
 const lines = [];
 lines.push('[Mockup Gallery] New feedback from design review:');
+if (data.session?.slug) {
+  lines.push(`Session: ${data.session.slug}`);
+}
 lines.push('');
 
 // Ratings section — data.ratings is an array of { mockup, rating, note, comments }
@@ -39,7 +42,14 @@ if (ratings.length > 0) {
   }
 }
 
-// Selected for build — data.selections is { route: { mockup, note } }
+function normalizeCandidates(info) {
+  if (Array.isArray(info)) return info.filter((entry) => entry && typeof entry === 'object');
+  if (typeof info === 'string') return [{ mockup: info }];
+  if (info && typeof info === 'object') return [info];
+  return [];
+}
+
+// Selected for build — data.selections is { route: candidate | candidate[] }
 const selections = data.selections || {};
 const selectedEntries = Object.entries(selections);
 
@@ -47,9 +57,26 @@ if (selectedEntries.length > 0) {
   lines.push('');
   lines.push('Selected for build:');
   for (const [route, info] of selectedEntries) {
-    const mockup = typeof info === 'string' ? info : (info.mockup || info.source || 'unknown');
-    lines.push(`  ${route} \u2190 ${mockup}`);
-    if (info.note) lines.push(`    Note: ${info.note}`);
+    const candidates = normalizeCandidates(info);
+    candidates.forEach((candidate, index) => {
+      const mockup = candidate.mockup || candidate.source || 'unknown';
+      const suffix = candidates.length > 1 ? ` (${index + 1}/${candidates.length})` : '';
+      lines.push(`  ${route}${suffix} \u2190 ${mockup}`);
+      if (candidate.changeNote) lines.push(`    Change: ${candidate.changeNote}`);
+      if (candidate.note) lines.push(`    Note: ${candidate.note}`);
+      if (candidate.status) lines.push(`    Status: ${candidate.status}`);
+    });
+  }
+}
+
+const picks = Array.isArray(data.picks) ? data.picks : [];
+if (picks.length > 0) {
+  lines.push('');
+  lines.push('Unassigned picks:');
+  for (const pick of picks) {
+    const mockup = pick.mockup || pick.source || 'unknown';
+    lines.push(`  ${mockup}`);
+    if (pick.note) lines.push(`    Note: ${pick.note}`);
   }
 }
 

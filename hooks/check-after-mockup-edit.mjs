@@ -31,13 +31,26 @@ if (existsSync(pendingPath)) {
   // Let the UserPromptSubmit hook handle this — just nudge
   process.stdout.write(
     '[Mockup Gallery] There is pending feedback from the gallery. ' +
-    'It will be shown on your next message, or run /mockup-feedback to see it now.\n'
+    'It will be shown on your next message, or run /mockup-gallery feedback to see it now.\n'
   );
   process.exit(0);
 }
 
 // Passive check — read selections.json for unacted feedback
-const selectionsPath = join(process.cwd(), '.mockup-gallery', 'selections.json');
+function readJson(p) {
+  try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return null; }
+}
+
+function currentSelectionsPath() {
+  const storageDir = join(process.cwd(), '.mockup-gallery');
+  const state = readJson(join(storageDir, 'state.json'));
+  if (state?.currentSession) {
+    return join(storageDir, 'sessions', state.currentSession, 'selections.json');
+  }
+  return join(storageDir, 'selections.json');
+}
+
+const selectionsPath = currentSelectionsPath();
 if (!existsSync(selectionsPath)) process.exit(0);
 
 let selections;

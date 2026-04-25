@@ -41,8 +41,6 @@ function readGlobalMemories(pluginRoot, projectName) {
 }
 
 const storageDir = join(process.cwd(), '.mockup-gallery');
-const selectionsPath = join(storageDir, 'selections.json');
-const selectedPath = join(storageDir, 'selected.json');
 const implementedPath = join(storageDir, 'implemented.json');
 const acceptedPath = join(storageDir, 'accepted-designs.json');
 
@@ -57,6 +55,33 @@ function readJson(p) {
   try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return null; }
 }
 
+function currentReviewPaths() {
+  const state = readJson(join(storageDir, 'state.json'));
+  if (state?.currentSession) {
+    const sessionDir = join(storageDir, 'sessions', state.currentSession);
+    return {
+      sessionSlug: state.currentSession,
+      selectionsPath: join(sessionDir, 'selections.json'),
+      selectedPath: join(sessionDir, 'selected.json'),
+    };
+  }
+  return {
+    sessionSlug: null,
+    selectionsPath: join(storageDir, 'selections.json'),
+    selectedPath: join(storageDir, 'selected.json'),
+  };
+}
+
+function routeCandidates(value) {
+  if (Array.isArray(value)) return value.filter((entry) => entry && typeof entry === 'object');
+  if (value && typeof value === 'object') return [value];
+  return [];
+}
+
+const reviewPaths = currentReviewPaths();
+const selectionsPath = reviewPaths.selectionsPath;
+const selectedPath = reviewPaths.selectedPath;
+
 // No gallery data — stay silent
 if (!existsSync(selectionsPath) && !existsSync(selectedPath)) process.exit(0);
 
@@ -67,6 +92,9 @@ const accepted = readJson(acceptedPath);
 
 const lines = [];
 lines.push('[Mockup Gallery] Design review status:');
+if (reviewPaths.sessionSlug) {
+  lines.push(`  Session: ${reviewPaths.sessionSlug}`);
+}
 
 // Rating counts
 if (selections?.selections) {
@@ -106,15 +134,21 @@ if (selections?.selections) {
 
 // Selected build — split into pending vs done
 if (selected) {
-  const pages = Object.entries(selected.pages || {});
-  const pending = pages.filter(([, d]) => d.status !== 'done');
-  const done = pages.filter(([, d]) => d.status === 'done');
-  const savedCount = (selected.saved || []).length;
+  const pages = [];
+  for (const [route, value] of Object.entries(selected.pages || {})) {
+    const entries = routeCandidates(value);
+    entries.forEach((data, index) => pages.push({ route, data, index, total: entries.length }));
+  }
+  const pending = pages.filter(({ data }) => data?.status !== 'done');
+  const done = pages.filter(({ data }) => data?.status === 'done');
+  const savedCount = Array.isArray(selected.saved) ? selected.saved.length : 0;
+  const pickCount = Array.isArray(selected.picks) ? selected.picks.length : 0;
 
-  if (pages.length > 0 || savedCount > 0) {
+  if (pages.length > 0 || savedCount > 0 || pickCount > 0) {
     const parts = [];
     if (pending.length > 0) parts.push(`${pending.length} pending`);
     if (done.length > 0) parts.push(`${done.length} done`);
+    if (pickCount > 0) parts.push(`${pickCount} unassigned picks`);
     if (savedCount > 0) parts.push(`${savedCount} saved for later`);
     lines.push(`  Selected build: ${parts.join(', ')}`);
   }
@@ -123,8 +157,9 @@ if (selected) {
   if (pending.length > 0) {
     lines.push('');
     lines.push('  PENDING DESIGN CHANGES (implement these):');
-    for (const [route, data] of pending) {
-      lines.push(`    ${route} ← mockup: ${data.source}`);
+    for (const { route, data, index, total } of pending) {
+      const suffix = total > 1 ? ` (${index + 1}/${total})` : '';
+      lines.push(`    ${route}${suffix} ← mockup: ${data.source}`);
       if (data.changeNote) {
         lines.push(`      Change: ${data.changeNote}`);
       } else {
@@ -142,7 +177,7 @@ if (selected) {
 
   // Done items — just list for reference
   if (done.length > 0) {
-    lines.push(`  Implemented: ${done.map(([route]) => route).join(', ')}`);
+    lines.push(`  Implemented: ${done.map(({ route }) => route).join(', ')}`);
   }
 }
 

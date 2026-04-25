@@ -1,19 +1,20 @@
-# File Changes - 2026-03-29T19:51:08.914Z
+# File Changes - 2026-04-13T00:17:48.452Z
 
-> SNAP_20260329_125108 | cycle 0 | session_end
+> SNAP_20260412_171748 | cycle 0 | time_interval
 
-## Files Changed (10 files, ~1215 lines)
-- `{.claude-plugin,.claude/commands,.claude/skills/mockup-review,.claude/hooks,server,gallery}` (create)
-- `.claude-plugin/plugin.json` (write ~7L)
-- `DESIGN.md` (write ~101L)
-- `docs/plans/2026-03-26-lifecycle-states.md` (write ~397L)
-- `.claude/commands/mockup-status.md` (write ~35L)
-- `server/gallery-server.mjs` (edit ~75L)
-- `gallery/gallery.html` (edit ~423L)
-- `hooks/check-pending.mjs` (write ~65L)
-- `.claude/commands/mockup-selections.md` (write ~36L)
-- `DESIGN-SELECTED.md` (write ~76L)
+## Files Changed (12 files, ~997 lines)
+- `.claude-plugin/marketplace.json` (write ~29L)
+- `hooks/hooks.json` (write ~37L)
+- `.claude-plugin/plugin.json` (write ~10L)
+- `server/gallery-server.mjs` (edit ~50L)
+- `.gitignore` (write/edit ~39L)
+- `.build-loop/goal.md` (write ~90L)
+- `.build-loop/plan.md` (write ~230L)
+- `src/lib/migrate-flat-to-sessions.mjs` (write ~303L)
+- `.build-loop/evals/2026-04-11-sessions-scorecard.md` (write ~182L)
+- `.build-loop/feedback.md` (write ~2L)
+- ...+2 more
 
-> Tools: Bash: 113, Read: 105, Edit: 96, TaskUpdate: 48, Agent: 47
+> Tools: Bash: 92, TaskUpdate: 24, Read: 20, TaskCreate: 16, Edit: 12
 
 *bookmark — file tracking snapshot*

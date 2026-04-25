@@ -119,6 +119,9 @@ When filenames contain dark/light variants (e.g., `dashboard-dark.html` and `das
 
 ## Mockup Format
 
+- Start every new review batch with a low-fidelity scratch mockup. The first mockup should be a black-and-white sketch used to decide big layout, hierarchy, flow, and content changes quickly with fewer tokens before any higher-fidelity variants are created.
+- Name scratch files so the gallery can prioritize them first, for example `00-scratch-dashboard.html`, `01-scratch-home.html`, `lo-fi-profile.html`, or `wireframe-checkout.html`.
+- Keep scratch mockups intentionally plain: monochrome, rough spacing, direct labels, no gradients, no decorative assets, and no production polish unless needed to answer the structural question.
 - Self-contained HTML files. Load Tailwind via CDN (`<script src="https://cdn.tailwindcss.com"></script>`).
 - No external asset dependencies. Inline all icons as SVG.
 - Label components with `data-component="ComponentName"` attributes.

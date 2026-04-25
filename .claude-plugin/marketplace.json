@@ -5,14 +5,14 @@
     "url": "https://github.com/tyroneross"
   },
   "metadata": {
-    "description": "Design review gallery for HTML mockups — rate, select, save, track implementation",
+    "description": "Design review gallery for HTML mockups — rate, select, save, prepare implementation handoff, and track implementation via /mockup-gallery",
     "version": "0.4.0"
   },
   "plugins": [
     {
       "name": "mockup-gallery",
       "source": "./",
-      "description": "Visual mockup review gallery with component-level ratings, auto-save to file, and Claude Code integration.",
+      "description": "Visual mockup review gallery with component-level ratings, auto-save to file, selected-build handoff, and Claude Code integration through /mockup-gallery.",
       "version": "0.4.0",
       "author": {
         "name": "Tyrone Ross"

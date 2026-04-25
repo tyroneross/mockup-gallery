@@ -92,6 +92,24 @@ function detectVariants(mockups) {
   }
 }
 
+// Scratch mockups are intentionally low-fidelity decision sketches. Prioritize
+// them in review order so big layout/content calls happen before hi-fi work.
+function isScratchMockup(mockup) {
+  const text = `${mockup?.file || ''} ${mockup?.name || ''}`.toLowerCase();
+  return (
+    /(^|[-_\s.])00([-_\s.]|$)/.test(text) ||
+    /(^|[-_\s.])(scratch|lo-fi|lofi|low-fidelity|low_fidelity|wireframe|sketch)([-_\s.]|$)/.test(text)
+  );
+}
+
+function compareMockupsForReview(a, b) {
+  if (!!a.archived !== !!b.archived) return a.archived ? 1 : -1;
+  const aScratch = isScratchMockup(a);
+  const bScratch = isScratchMockup(b);
+  if (aScratch !== bScratch) return aScratch ? -1 : 1;
+  return (b.modifiedMs || 0) - (a.modifiedMs || 0);
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -144,6 +162,38 @@ function serveFile(res, filePath, mime) {
 
 function readJsonFile(filePath) {
   try { return JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch { return null; }
+}
+
+function readCurrentReviewState() {
+  const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
+  if (legacy) {
+    return {
+      layout: 'flat',
+      currentSession: null,
+      selections: readJsonFile(path.join(STORAGE_DIR, 'selections.json')) || {},
+      selected: readJsonFile(path.join(STORAGE_DIR, 'selected.json')) || {},
+    };
+  }
+
+  const slug = sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+  if (!slug) {
+    return {
+      layout: 'sessions',
+      currentSession: null,
+      selections: {},
+      selected: {},
+    };
+  }
+
+  let selections = {};
+  try { selections = sessionStore.readSessionSelections(STORAGE_DIR, slug); } catch {}
+
+  return {
+    layout: 'sessions',
+    currentSession: slug,
+    selections,
+    selected: readJsonFile(path.join(STORAGE_DIR, 'sessions', slug, 'selected.json')) || {},
+  };
 }
 
 function getProjectLastChange() {
@@ -547,7 +597,7 @@ function handler(req, res) {
               })
           : [];
         const files = [...mainFiles, ...archiveFiles]
-          .sort((a, b) => b.modifiedMs - a.modifiedMs);
+          .sort(compareMockupsForReview);
         detectVariants(files);
         return json(res, files);
       }
@@ -561,7 +611,7 @@ function handler(req, res) {
       }
       const listing = sessionStore.listSessionMockups(MOCKUP_DIR, slug);
       const files = [...listing.main, ...listing.archive]
-        .sort((a, b) => b.modifiedMs - a.modifiedMs);
+        .sort(compareMockupsForReview);
       detectVariants(files);
       return json(res, files);
     } catch (e) {
@@ -970,14 +1020,19 @@ function handler(req, res) {
   // POST /share-with-claude — build pending-review.json from selections + selected
   if (req.method === 'POST' && pathname === '/share-with-claude') {
     try {
-      const selections = readJsonFile(path.join(STORAGE_DIR, 'selections.json')) || {};
-      const selected   = readJsonFile(path.join(STORAGE_DIR, 'selected.json'))   || {};
+      const reviewState = readCurrentReviewState();
+      const selections = reviewState.selections || {};
+      const selected   = reviewState.selected || {};
 
       // Build ratings array from selections.selections array
       const ratings = [];
       const items = Array.isArray(selections.selections) ? selections.selections : [];
       for (const item of items) {
-        const entry = { mockup: (item.file || item.name || '').replace(/\.html$/, ''), rating: item.rating || 'unrated' };
+        const entry = {
+          mockup: (item.file || item.name || '').replace(/\.html$/, ''),
+          file: item.file || null,
+          rating: item.rating || 'unrated',
+        };
         entry.note = item.note || null;
         // Gather component-level comments (names that look like feedback + notes)
         const comments = [];
@@ -998,7 +1053,10 @@ function handler(req, res) {
       const selectionMap = {};
       if (selected.pages) {
         for (const [route, value] of Object.entries(selected.pages)) {
-          const entries = Array.isArray(value) ? value : (value ? [value] : []);
+          const entries = Array.isArray(value)
+            ? value.filter(entry => entry && typeof entry === 'object')
+            : (value && typeof value === 'object' ? [value] : []);
+          if (entries.length === 0) continue;
           selectionMap[route] = entries.map(info => ({
             mockup: info?.source || null,
             note: info?.note || null,
@@ -1021,6 +1079,7 @@ function handler(req, res) {
       const nayCount      = ratings.filter(r => r.rating === 'nay').length;
       const unratedCount  = ratings.filter(r => r.rating === 'unrated').length;
       const pageCount     = Object.keys(selectionMap).length;
+      const candidateCount = Object.values(selectionMap).reduce((n, entries) => n + (Array.isArray(entries) ? entries.length : 0), 0);
       const commentCount  = ratings.reduce((n, r) => n + (r.comments ? r.comments.length : 0), 0);
 
       let projectName = path.basename(PROJECT_ROOT);
@@ -1029,10 +1088,12 @@ function handler(req, res) {
       const review = {
         sharedAt: new Date().toISOString(),
         project: projectName,
+        layout: reviewState.layout,
+        session: reviewState.currentSession ? { slug: reviewState.currentSession } : null,
         ratings,
         selections: selectionMap,
         picks,
-        summary: `${ratings.length} rated (${yayCount} yay, ${nayCount} nay, ${unratedCount} unrated), ${pageCount} page${pageCount !== 1 ? 's' : ''} selected, ${picks.length} pick${picks.length !== 1 ? 's' : ''}, ${commentCount} comment${commentCount !== 1 ? 's' : ''}`,
+        summary: `${ratings.length} rated (${yayCount} yay, ${nayCount} nay, ${unratedCount} unrated), ${pageCount} page${pageCount !== 1 ? 's' : ''} selected (${candidateCount} candidate${candidateCount !== 1 ? 's' : ''}), ${picks.length} pick${picks.length !== 1 ? 's' : ''}, ${commentCount} comment${commentCount !== 1 ? 's' : ''}`,
       };
 
       const dest = path.join(STORAGE_DIR, 'pending-review.json');

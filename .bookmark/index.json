@@ -1,15 +1,71 @@
 {
   "version": "1.0.0",
   "project_path": "/Users/tyroneross/Desktop/git-folder/mockup-gallery",
-  "last_updated": 1774813868914,
+  "last_updated": 1776039468452,
   "stats": {
-    "total_snapshots": 44,
+    "total_snapshots": 51,
     "compaction_cycles": 0,
     "last_compaction": 0,
-    "last_snapshot": 1774813868914,
-    "last_time_based": 1774812888051
+    "last_snapshot": 1776039468452,
+    "last_time_based": 1776039468452
   },
   "snapshots": [
+    {
+      "id": "SNAP_20260412_171748",
+      "timestamp": 1776039468452,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 12
+    },
+    {
+      "id": "SNAP_20260411_171811",
+      "timestamp": 1775953091467,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 12
+    },
+    {
+      "id": "SNAP_20260411_171217",
+      "timestamp": 1775952737909,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 12
+    },
+    {
+      "id": "SNAP_20260411_163555",
+      "timestamp": 1775950555518,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 10
+    },
+    {
+      "id": "SNAP_20260411_155700",
+      "timestamp": 1775948220103,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 5
+    },
+    {
+      "id": "SNAP_20260411_154650",
+      "timestamp": 1775947610816,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 3
+    },
+    {
+      "id": "SNAP_20260411_154244",
+      "timestamp": 1775947364829,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 3
+    },
+    {
+      "id": "SNAP_20260411_154010",
+      "timestamp": 1775947210633,
+      "trigger": "time_interval",
+      "compaction_cycle": 0,
+      "files_changed_count": 3
+    },
     {
       "id": "SNAP_20260329_125108",
       "timestamp": 1774813868914,
@@ -300,20 +356,6 @@
     {
       "id": "SNAP_20260326_192140",
       "timestamp": 1774578100884,
-      "trigger": "session_end",
-      "compaction_cycle": 0,
-      "files_changed_count": 2
-    },
-    {
-      "id": "SNAP_20260326_192121",
-      "timestamp": 1774578081277,
-      "trigger": "session_end",
-      "compaction_cycle": 0,
-      "files_changed_count": 2
-    },
-    {
-      "id": "SNAP_20260326_191949",
-      "timestamp": 1774577989417,
       "trigger": "session_end",
       "compaction_cycle": 0,
       "files_changed_count": 2

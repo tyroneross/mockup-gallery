@@ -7,8 +7,11 @@ description: Design review workflow for HTML mockups. Use when creating mockups 
 
 Each mockup is a single self-contained HTML file:
 
+- Start each new review batch with a low-fidelity black-and-white scratch mockup. Use it to resolve big layout, hierarchy, flow, and content decisions quickly with fewer tokens before making higher-fidelity alternatives.
+- Name the scratch mockup so the gallery can sort it first, for example `00-scratch-dashboard.html`, `01-scratch-home.html`, `lo-fi-profile.html`, or `wireframe-checkout.html`.
+- Keep scratch mockups plain: monochrome, rough structure, direct labels, and no decorative polish unless it answers the structural decision.
 - Load Tailwind via CDN (`<script src="https://cdn.tailwindcss.com"></script>`) — no build step.
-- Use Aurora Deep styling: dark backgrounds (`bg-gray-950`, `bg-gray-900`), violet/indigo accents (`violet-500`, `indigo-400`), subtle glow effects via `shadow` and `ring` utilities.
+- For higher-fidelity mockups, use Aurora Deep styling: dark backgrounds (`bg-gray-950`, `bg-gray-900`), violet/indigo accents (`violet-500`, `indigo-400`), subtle glow effects via `shadow` and `ring` utilities.
 - No external asset dependencies. Inline all icons as SVG. Use placeholder colors instead of images.
 - Label every distinct component with a `data-component="ComponentName"` attribute so the gallery can identify sections for component-level review.
 - Add a visible section label in small muted text above each component block so users know what they are rating.
