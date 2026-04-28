@@ -1,6 +1,6 @@
 ---
 name: mockup-review
-description: Use when the user wants to review HTML mockups, inspect mockup-gallery state, align selected mockups to routes or screens, or coordinate mockup implementation work from Codex without relying on Claude-specific hooks or slash commands.
+description: Use to review HTML mockups, rate mockups, check selections, align mockups to routes/screens, or implement approved designs from the mockup gallery.
 ---
 
 # Mockup Review

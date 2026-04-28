@@ -1,7 +1,7 @@
 {
   "name": "mockup-gallery",
   "version": "0.4.1",
-  "description": "Visual mockup review gallery with component-level ratings, selected-build handoff, session state, and Claude Code integration. Use /mockup-gallery as the single entry point.",
+  "description": "Visual mockup review with component-level ratings",
   "author": {
     "name": "Tyrone Ross"
   },

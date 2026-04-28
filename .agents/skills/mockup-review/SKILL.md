@@ -1,6 +1,6 @@
 ---
 name: mockup-review
-description: Design review workflow for HTML mockups. Use when creating mockups for review, checking design selections, or implementing approved designs. Triggers on "mockup", "design review", "gallery", "rate mockup", "check selections", "accepted designs", "design decisions".
+description: Use to create HTML mockups for review, check design selections/ratings, or implement approved designs. Triggers on "mockup", "design review", "gallery", "rate mockup", "accepted designs".
 ---
 
 ## 1. Creating mockups for review
