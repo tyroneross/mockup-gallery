@@ -106,13 +106,15 @@ Mockups are plain HTML files — build them however you like. The gallery serves
 
 ## Codex
 
-This package now ships an additive Codex plugin surface alongside the existing Claude Code package. The Claude package remains authoritative for Claude behavior; the Codex package adds a parallel `.codex-plugin/plugin.json` install surface without changing the Claude runtime.
+This package ships an additive Codex plugin surface alongside the existing Claude Code package. The Claude package remains authoritative for Claude behavior; the Codex package adds a parallel `.codex-plugin/plugin.json` install surface without changing the Claude runtime.
 
 Package root for Codex installs:
 - the repository root (`.`)
 
 Primary Codex surface:
-- skills from `(none)` when present
+- skills from `./skills/`
 - MCP config from `(none)` when present
+
+Codex can use the `mockup-review` skill to create scratch-first HTML mockups, optionally use image generation for local visual assets when it materially improves review quality, launch the gallery, read selected state, and implement approved designs.
 
 Install the package from this package root using your current Codex plugin install flow. The Codex package is additive only: Claude-specific hooks, slash commands, and agent wiring remain unchanged for Claude Code.

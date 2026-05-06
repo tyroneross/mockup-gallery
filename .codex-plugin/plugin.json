@@ -1,25 +1,35 @@
 {
   "name": "mockup-gallery",
   "version": "0.4.0",
-  "description": "Visual mockup review gallery with component-level ratings, auto-save to file, and Claude Code integration. Launch with /mockup-review.",
+  "description": "Create, review, select, and implement local HTML mockups from Codex with scratch-first design guidance.",
   "author": {
     "name": "Tyrone Ross"
   },
+  "skills": "./skills/",
   "keywords": [
     "design-review",
     "mockups",
     "ui",
-    "claude-code"
+    "codex",
+    "imagegen"
   ],
   "interface": {
     "displayName": "Mockup Gallery",
-    "shortDescription": "Visual mockup review gallery with component-level ratings, auto-save to file, and Claude Code integration. Launch with /mockup-review.",
-    "longDescription": "Visual mockup review gallery with component-level ratings, auto-save to file, and Claude Code integration. Launch with /mockup-review.",
+    "shortDescription": "Create and review local HTML mockups from Codex.",
+    "longDescription": "Mockup Gallery helps Codex create scratch-first HTML mockups, optionally use generated imagery when it improves design review, launch the local gallery, read selections, and port approved designs into production code.",
     "developerName": "Ross Labs",
     "category": "Design",
     "capabilities": [
       "Read",
-      "Write"
-    ]
+      "Write",
+      "Interactive",
+      "Image Generation"
+    ],
+    "defaultPrompt": [
+      "Create a scratch UI mockup for this feature.",
+      "Launch the gallery and summarize selected mockups.",
+      "Implement the approved mockup for this route."
+    ],
+    "brandColor": "#2563EB"
   }
 }
