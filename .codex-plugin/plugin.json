@@ -31,5 +31,6 @@
       "Implement the approved mockup for this route."
     ],
     "brandColor": "#2563EB"
-  }
+  },
+  "license": "Apache-2.0"
 }
