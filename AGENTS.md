@@ -47,6 +47,44 @@ Follow the format in COMMON.md:
 - Visible component labels
 - One screen per file
 
+## Sessions
+
+Projects that use sessions mode have `.mockup-gallery/state.json` at schema version 2 (`{ "version": 2, "currentSession": "<slug>", ... }`). In sessions mode mockups live in a per-session subdirectory, not at the flat `mockups/` root. Writing to the wrong location silently corrupts session state.
+
+**Before creating any mockup file**, read `.mockup-gallery/state.json`:
+
+- If `currentSession` is set, write into `mockups/sessions/<currentSession>/`. That is the active session directory.
+- If `currentSession` is `null` and no `sessions/` subdirectory exists under `mockups/`, the project is in legacy flat mode — write to `mockups/` as before.
+
+**On-disk layout (version 2):**
+
+```
+mockups/
+  sessions/
+    <slug>/
+      session.json       — name, goal, tags, status, createdAt
+      *.html             — session's mockup files  ← write here when sessions mode is active
+      archive/           — archived mockups for this session
+.mockup-gallery/
+  state.json             — { version: 2, currentSession: "<slug>", migratedFrom, migratedAt }
+  sessions/
+    <slug>/
+      selections.json    — ratings and notes scoped to this session
+      selected.json      — selected build for this session
+```
+
+**Session commands** (all routed through `/mockup-gallery`):
+
+| Intent | Argument |
+|--------|----------|
+| List all sessions | `/mockup-gallery sessions` |
+| Create a new session | `/mockup-gallery new session` |
+| Archive a session | `/mockup-gallery archive session` |
+
+If the gallery server is not running, read `.mockup-gallery/state.json` and `mockups/sessions/*/session.json` directly for a read-only view of current state.
+
+**Failure prevented:** writing `mockups/my-mockup.html` when `currentSession` is set bypasses session scoping entirely — the gallery will not serve the file, ratings will not be stored against the session, and `state.json`'s `currentSession` pointer becomes stale. Always resolve the current session first.
+
 ## Global Memories
 
 If the mockup-gallery plugin is installed, global design memories are at:
