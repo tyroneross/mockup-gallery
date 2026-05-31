@@ -40,12 +40,19 @@ HTML mockup files live in the project (not in `.mockup-gallery/`). Check these d
 ## Creating Mockups
 
 Follow the format in COMMON.md:
-- First create a low-fidelity black-and-white scratch mockup for big layout, flow, hierarchy, and content decisions before higher-fidelity variants.
+- Read `.mockup-gallery/state.json#preferences.wireframeFirst` before creating new mockups. When `true` (default) — and on a missing `preferences` block — start every new review batch with a low-fidelity black-and-white scratch mockup for big layout, flow, hierarchy, and content decisions before higher-fidelity variants. When `false`, the user has opted out — proceed directly to hi-fi HTML.
 - Use a filename prefix such as `00-scratch-`, `01-scratch-`, `lo-fi-`, or `wireframe-` so the gallery shows it first.
 - Self-contained HTML with Tailwind CDN
 - `data-component` attributes on every distinct section
 - Visible component labels
 - One screen per file
+- When the project root has a `DESIGN.md` in [Google's design-system format](https://github.com/google-labs-code/design.md), align colors, typography, spacing, elevation, and shape to its YAML tokens. DESIGN.md is the visual-identity source of truth and is shared across mockup-gallery, ad-hoc design tools, and AI coding agents.
+
+## Implementation Handoff Artifacts
+
+When the user selects a page through the gallery, the server emits a structured Markdown handoff at `.mockup-gallery/handoff/<route-slug>.md` (or the session-scoped equivalent under `.mockup-gallery/sessions/<slug>/handoff/`). Each handoff frontmatter declares `schema: mockup-gallery-handoff`, the `route`, the `source` mockup, `selectedAt`, `status`, and `filled: false`. Body sections cover Source, Components (classification table), Data Elements, Connectors / APIs, Visualizations, States, and Open Questions. Fill the file by reading the source mockup's `data-component` markup, classifying each element (`static | dynamic | computed | userInput | action | unknown`), and capturing data sources and connector contracts. Flip `filled: true` when complete. Existing handoff files are preserved on re-emit; pass `regenerateHandoffs: true` on the `/selected` POST to overwrite.
+
+DESIGN.md and the handoff artifacts are deliberately distinct: DESIGN.md = visual identity; handoff = interactions / data / states / connectors per selected page.
 
 ## Sessions
 

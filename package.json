@@ -1,6 +1,6 @@
 {
   "name": "mockup-gallery",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Local design review tool for HTML mockups — rate, select, save, and track implementation",
   "type": "module",
   "bin": {

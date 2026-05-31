@@ -24,6 +24,8 @@ The gallery opens at `http://localhost:8787` (auto-increments if busy). Each pro
 - **Auto-placement** — Fuzzy-matches mockup filenames to detected routes and pre-selects.
 - **Implementation tracking** — Track which components have been built.
 - **Multi-project** — Run separate galleries for different projects simultaneously.
+- **Wireframe-first toggle** — A sidebar toggle (default ON) that drives the host coding agent to begin new review batches with a lo-fi wireframe before hi-fi HTML variants. Persisted per-project at `.mockup-gallery/state.json#preferences.wireframeFirst`. Flip OFF to allow hi-fi directly.
+- **Two implementation-handoff artifacts** — A project-root `DESIGN.md` in [Google's design-system format](https://github.com/google-labs-code/design.md) for visual identity (colors, typography, spacing, elevation, shape), AND per-route `.mockup-gallery/handoff/<slug>.md` files emitted on `/selected` for interaction / data / state / connector contracts. Scaffold the design system via `POST /design-system/scaffold`.
 
 ## Sidebar Layout
 
@@ -84,11 +86,16 @@ All data lives in `.mockup-gallery/` inside the project root:
 
 ```
 .mockup-gallery/
-  selections.json       Ratings + notes
-  selected.json         Selected build (pages, components, saved)
+  state.json            Top-level: schema version, currentSession, preferences (wireframeFirst, ...)
+  selections.json       Ratings + notes (legacy flat layout)
+  selected.json         Selected build (pages, components, saved) (legacy flat layout)
   implemented.json      Implementation tracking
   accepted-designs.json Approved design patterns
+  handoff/              Per-route implementation handoff specs (Markdown) — written on /selected
+  sessions/<slug>/      Sessions-mode equivalents of selections/selected/handoff
 ```
+
+The project-root `DESIGN.md` (Google design-system format) lives alongside `package.json`, not under `.mockup-gallery/` — it is the visual-identity source of truth shared by mockup-gallery, ad-hoc design tools, and AI coding agents.
 
 Add `.mockup-gallery/` to `.gitignore` if you don't want to track review state in version control.
 

@@ -39,9 +39,18 @@ Review state lives in `.mockup-gallery/`: `selections.json`, `selected.json`, `i
 
 Before implementing selected UI, use `/mockup-gallery implement` or `/mockup-gallery handoff`. Claude should read selected mockups, identify every changed UI element, classify each as static, dynamic, computed, user input, action, or unknown, and capture data sources, field paths, connector/API contracts, loading/empty/error states, visualizations, and unresolved questions before coding.
 
-## Scratch-First Mockups
+## Wireframe-First Toggle
 
-Every new review batch should start with a low-fidelity black-and-white scratch mockup. Use it to decide major layout, hierarchy, flow, and content changes quickly with fewer tokens before making higher-fidelity variants. Name it with a prefix such as `00-scratch-`, `01-scratch-`, `lo-fi-`, or `wireframe-` so the gallery prioritizes it first.
+The gallery exposes a `Lo-fi first` toggle in the sidebar, persisted at `.mockup-gallery/state.json#preferences.wireframeFirst`. It defaults to `true`, in which case every new review batch should start with a low-fidelity black-and-white scratch mockup before higher-fidelity variants. Name scratch files with a prefix such as `00-scratch-`, `01-scratch-`, `lo-fi-`, or `wireframe-` so the gallery prioritizes them first. When the toggle is `false`, the user has opted out — proceed directly to hi-fi HTML. Treat a missing `preferences` block as `wireframeFirst: true`.
+
+Read the live value from `GET /preferences` when the gallery is running, or directly from `state.json` otherwise. The toggle is a default, not a hard block — honor an explicit one-off request to skip the scratch step without flipping the global toggle.
+
+## Design System and Handoff Artifacts
+
+This plugin emits two distinct implementation-handoff artifacts:
+
+- **`DESIGN.md`** at the project root, in [Google's design-system format](https://github.com/google-labs-code/design.md), holds the visual identity (colors, typography, spacing, elevation, shape) as YAML tokens plus prose rationale. When present, treat its tokens as canonical for new mockups. Scaffold a starter via `POST /design-system/scaffold` (returns 409 if a `DESIGN.md` exists without `force: true`).
+- **`.mockup-gallery/handoff/<route-slug>.md`** (or the session-scoped equivalent) is emitted on every `POST /selected`. Each file is a structured Markdown brief — frontmatter (`schema`, `route`, `source`, `selectedAt`, `status`, `filled`) plus body sections (Source, Components, Data Elements, Connectors / APIs, Visualizations, States, Open Questions). Fill it by reading the source mockup's `data-component` markup and flip `filled: true` when complete. Existing handoff files are preserved on re-emit; pass `regenerateHandoffs: true` to overwrite intentionally.
 
 ## Memories
 

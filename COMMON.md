@@ -6,6 +6,8 @@ Shared rules for all agents working with mockup-gallery data. Platform-specific 
 
 Review data lives in `.mockup-gallery/` inside each project root. Mockup HTML files live in the project's `mockups/` directory (or `docs/mockups/`, `.claude/mockups/`).
 
+The project-root `DESIGN.md` (in [Google's design-system format](https://github.com/google-labs-code/design.md)) is the visual-identity source of truth — colors, typography, spacing, elevation, shape. It lives alongside `package.json`, not under `.mockup-gallery/`, and is shared by mockup-gallery, ad-hoc design tools, and AI coding agents.
+
 ## Data Schema
 
 ### selections.json — Ratings and Notes
@@ -87,6 +89,49 @@ When filenames contain dark/light variants (e.g., `dashboard-dark.html` and `das
 
 - `variant` (string) — `"dark"` or `"light"` when detected
 - `pairedWith` (string) — Filename of the counterpart variant, or `undefined` if no pair
+
+### state.json — Top-Level Pointer and Preferences
+
+```json
+{
+  "version": 2,
+  "currentSession": "<slug-or-null>",
+  "migratedFrom": null,
+  "migratedAt": null,
+  "preferences": {
+    "wireframeFirst": true
+  }
+}
+```
+
+- `version` — schema version (current: `2`)
+- `currentSession` — slug of the active review session, or `null` in legacy flat mode
+- `preferences.wireframeFirst` — when `true` (default), new review batches start with a low-fidelity wireframe before hi-fi HTML variants. The gallery exposes a `Lo-fi first` sidebar toggle that flips this. When `false`, the host coding agent may proceed directly to hi-fi mockups for new batches.
+
+### handoff/ — Per-Route Implementation Handoff Artifacts
+
+When the user selects a page via the gallery, the server writes one structured Markdown file per route to `.mockup-gallery/handoff/<route-slug>.md` (legacy/flat) or `.mockup-gallery/sessions/<slug>/handoff/<route-slug>.md` (sessions). Each file is the canonical implementation brief for that route:
+
+```yaml
+---
+schema: mockup-gallery-handoff
+schemaVersion: 1
+route: "/search"
+slug: search
+source: "04-search-page.html"
+session: "<slug-or-empty>"
+selectedAt: "YYYY-MM-DD"
+status: "pending"
+primary: true
+changeNote: "Tighten search input"
+note: ""
+filled: false
+---
+```
+
+Body sections: Source, Components (with classification table), Data Elements, Connectors / APIs, Visualizations, States, Open Questions. The host coding agent fills the placeholders by reading the source mockup's `data-component` markup, classifying each element (`static | dynamic | computed | userInput | action | unknown`), capturing data sources and connector contracts, and listing open questions. Flip `filled: true` in the frontmatter when complete.
+
+DESIGN.md and these handoff artifacts are deliberately distinct: DESIGN.md = visual identity; handoff = interactions / data / states / connectors per selected page. Re-emit is idempotent (existing handoff files are preserved); pass `regenerateHandoffs: true` on the `/selected` POST to overwrite.
 
 ### accepted-designs.json — Approved/Rejected Patterns
 
