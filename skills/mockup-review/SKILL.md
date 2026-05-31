@@ -64,6 +64,19 @@ Rules:
 6. Ask a concise question when the target route, data source, action behavior, or validation target is unclear.
 7. Keep Codex usage additive only. Do not alter Claude hook behavior or slash-command semantics.
 
+## Implementation handoff artifacts
+
+When the user selects a page via the gallery (`POST /selected`), the server emits one structured Markdown file per route to `.mockup-gallery/handoff/<route-slug>.md` (or the session-scoped equivalent under `.mockup-gallery/sessions/<slug>/handoff/`). Each file is the canonical implementation brief for that route — frontmatter (`schema`, `route`, `source`, `selectedAt`, `status`, `filled`) plus body sections (Source, Components, Data Elements, Connectors / APIs, Visualizations, States, Open Questions).
+
+The file ships with placeholders; you (the host coding agent) fill it by reading the source mockup's `data-component` markup, classifying each element (static / dynamic / computed / userInput / action / unknown), capturing data sources and connector contracts, and listing open questions. Flip `filled: true` in the frontmatter when complete.
+
+DESIGN.md and the handoff artifacts are deliberately separate:
+
+- **DESIGN.md** at the project root — visual identity (colors, typography, spacing, elevation, shape) in Google's design-system format.
+- **`.mockup-gallery/handoff/<slug>.md`** — interactions, data, states, connectors per selected page.
+
+Existing handoff files are preserved on re-emit so agent-filled content is never clobbered; pass `regenerateHandoffs: true` on the `/selected` POST when intentionally regenerating from scratch.
+
 ## Implementation guardrails
 
 - Never implement unrated or rejected mockups.

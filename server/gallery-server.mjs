@@ -6,6 +6,7 @@ import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import * as sessionStore from '../src/lib/session-store.mjs';
 import * as designSystem from '../src/lib/design-system.mjs';
+import * as handoff from '../src/lib/handoff.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GALLERY_DIR = path.resolve(__dirname, '../gallery');
@@ -715,7 +716,21 @@ function handler(req, res) {
           }
         }
       }
-      json(res, { ok: true });
+      // Emit per-route implementation handoff artifacts. Idempotent by
+      // default (existing handoff files are preserved so agent-filled
+      // content is never clobbered). The selected.json POST may carry a
+      // top-level `regenerateHandoffs: true` to force overwrite.
+      let handoffResult = { written: [], skipped: [], errors: [] };
+      try {
+        const sessionSlug = legacy ? null : sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+        handoffResult = handoff.emitHandoffsForSelection(STORAGE_DIR, data, {
+          sessionSlug,
+          regenerate: !!data?.regenerateHandoffs,
+        });
+      } catch (e) {
+        handoffResult = { written: [], skipped: [], errors: [{ path: 'handoff', error: e.message }] };
+      }
+      json(res, { ok: true, handoff: handoffResult });
     }).catch(e => json(res, { error: e.message }, 500));
     return;
   }
