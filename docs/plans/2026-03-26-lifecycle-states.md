@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node.js (zero deps), HTML/CSS/JS
 
-**Spec:** `DESIGN.md`
+**Spec:** `docs/DESIGN-NOTES.md` (renamed from root `DESIGN.md` when the project adopted the Google `DESIGN.md` design-system format at the root)
 
 ---
 

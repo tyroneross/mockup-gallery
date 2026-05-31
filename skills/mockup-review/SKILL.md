@@ -10,7 +10,8 @@ Use this skill when the user wants Codex to create, review, select, revise, or i
 ## Sources of truth
 
 - `COMMON.md` and `AGENTS.md` for shared mockup format and implementation rules
-- `.mockup-gallery/` JSON state for selections, ratings, saved items, and archive state
+- `.mockup-gallery/` JSON state for selections, ratings, saved items, archive state, and workflow preferences
+- `DESIGN.md` at the project root for the design-system (visual identity: colors, typography, spacing, elevation, shape) in [Google's DESIGN.md format](https://github.com/google-labs-code/design.md). When present, treat its YAML tokens as canonical and align new mockups to them. Scaffold a starter via `POST /design-system/scaffold` if absent.
 - `mockups/`, `docs/mockups/`, or `.claude/mockups/` for HTML mockup files
 - `gallery/gallery.html` and `server/gallery-server.mjs` for the local review surface
 - `commands/*.md` remain Claude-oriented companion assets; in Codex, prefer this skill directly

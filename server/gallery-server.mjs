@@ -5,6 +5,7 @@ import path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import * as sessionStore from '../src/lib/session-store.mjs';
+import * as designSystem from '../src/lib/design-system.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GALLERY_DIR = path.resolve(__dirname, '../gallery');
@@ -951,6 +952,35 @@ function handler(req, res) {
         return json(res, { ok: true, session });
       } catch (e) {
         return json(res, { error: e.message }, /Invalid session slug/.test(e.message) ? 400 : 404);
+      }
+    }).catch(e => json(res, { error: e.message }, 500));
+    return;
+  }
+
+  // GET /design-system — detect project-root DESIGN.md (Google format)
+  if (req.method === 'GET' && pathname === '/design-system') {
+    try {
+      return json(res, designSystem.detectDesignSystem(PROJECT_ROOT));
+    } catch (e) {
+      return json(res, { error: e.message }, 500);
+    }
+  }
+
+  // POST /design-system/scaffold — { name?, force? } → write starter DESIGN.md
+  if (req.method === 'POST' && pathname === '/design-system/scaffold') {
+    readBody(req).then(body => {
+      let parsed = {};
+      if (body && body.trim()) {
+        try { parsed = JSON.parse(body); } catch { return json(res, { error: 'invalid json body' }, 400); }
+      }
+      try {
+        const result = designSystem.scaffoldDesignSystem(PROJECT_ROOT, {
+          name: parsed?.name,
+          force: !!parsed?.force,
+        });
+        return json(res, result, result.ok ? 200 : 409);
+      } catch (e) {
+        return json(res, { error: e.message }, 500);
       }
     }).catch(e => json(res, { error: e.message }, 500));
     return;
