@@ -77,6 +77,8 @@ DESIGN.md and the handoff artifacts are deliberately separate:
 
 Existing handoff files are preserved on re-emit so agent-filled content is never clobbered; pass `regenerateHandoffs: true` on the `/selected` POST when intentionally regenerating from scratch.
 
+When `GET /design-system` returns `{ present: true, hasFrontmatter: false }`, a `DESIGN.md` exists but contains no machine-readable YAML token block. Offer to scaffold over it with `POST /design-system/scaffold` and `force: true`, or prompt the user to add the frontmatter manually.
+
 ## Implementation guardrails
 
 - Never implement unrated or rejected mockups.

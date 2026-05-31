@@ -664,21 +664,30 @@ function handler(req, res) {
   if (req.method === 'POST' && pathname === '/selected') {
     readBody(req).then(body => {
       const data = JSON.parse(body);
+      // Validate payload shape: pages key is required (even if empty {}).
+      // The real gallery always sends { pages:{}, components:{}, picks:[], saved:[] };
+      // a body missing pages entirely indicates a malformed or out-of-date client.
+      if (!data || typeof data.pages !== 'object' || data.pages === null) {
+        return json(res, { ok: false, error: "POST /selected requires a 'pages' object" }, 400);
+      }
       const legacy = sessionStore.isLegacyFlat(MOCKUP_DIR, STORAGE_DIR);
       let selectedJsonPath;
       let selectedDir;
       let mockupBase;
+      // F3: resolve session slug once here and reuse below to avoid TOCTOU split
+      // across the selected.json write and the handoff emit.
+      let sessionSlug = null;
       if (legacy) {
         selectedJsonPath = path.join(STORAGE_DIR, 'selected.json');
         selectedDir = path.join(MOCKUP_DIR, 'selected');
         mockupBase = MOCKUP_DIR;
       } else {
-        const slug = sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
-        if (!slug) return json(res, { error: 'no current session' }, 400);
-        const sessionStateDir = path.join(STORAGE_DIR, 'sessions', slug);
+        sessionSlug = sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+        if (!sessionSlug) return json(res, { error: 'no current session' }, 400);
+        const sessionStateDir = path.join(STORAGE_DIR, 'sessions', sessionSlug);
         if (!fs.existsSync(sessionStateDir)) fs.mkdirSync(sessionStateDir, { recursive: true });
         selectedJsonPath = path.join(sessionStateDir, 'selected.json');
-        mockupBase = path.join(MOCKUP_DIR, 'sessions', slug);
+        mockupBase = path.join(MOCKUP_DIR, 'sessions', sessionSlug);
         selectedDir = path.join(mockupBase, 'selected');
       }
       fs.writeFileSync(selectedJsonPath, JSON.stringify(data, null, 2), 'utf8');
@@ -722,7 +731,7 @@ function handler(req, res) {
       // top-level `regenerateHandoffs: true` to force overwrite.
       let handoffResult = { written: [], skipped: [], errors: [] };
       try {
-        const sessionSlug = legacy ? null : sessionStore.getCurrentSession(MOCKUP_DIR, STORAGE_DIR);
+        // Use the slug resolved at handler entry (F3: avoid TOCTOU session split).
         handoffResult = handoff.emitHandoffsForSelection(STORAGE_DIR, data, {
           sessionSlug,
           regenerate: !!data?.regenerateHandoffs,

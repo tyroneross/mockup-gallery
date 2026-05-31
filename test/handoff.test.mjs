@@ -235,6 +235,49 @@ async function stopServer(child) {
   });
 }
 
+test('POST /selected: body missing pages key returns 400', async () => {
+  const { root } = mkProject();
+  let srv;
+  try {
+    srv = await startServer(root);
+    // No pages key at all — should be a client error, not silent ok:true.
+    const r = await fetch(`http://localhost:${srv.port}/selected`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ components: {}, picks: [], saved: [] }),
+    });
+    assert.equal(r.status, 400);
+    const j = await r.json();
+    assert.equal(j.ok, false);
+    assert.match(j.error, /pages/);
+  } finally {
+    if (srv) await stopServer(srv.child);
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('POST /selected: valid empty pages object succeeds with ok:true', async () => {
+  const { root } = mkProject();
+  let srv;
+  try {
+    srv = await startServer(root);
+    // Empty pages is valid — real client always sends this shape.
+    const r = await fetch(`http://localhost:${srv.port}/selected`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pages: {}, components: {}, picks: [], saved: [] }),
+    });
+    assert.equal(r.status, 200);
+    const j = await r.json();
+    assert.equal(j.ok, true);
+    assert.ok(j.handoff);
+    assert.equal(j.handoff.errors.length, 0);
+  } finally {
+    if (srv) await stopServer(srv.child);
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('POST /selected (legacy layout) writes .mockup-gallery/handoff/<slug>.md', async () => {
   const { root, storageDir } = mkProject();
   let srv;
