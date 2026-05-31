@@ -143,6 +143,49 @@ export function writeState(storageDir, state) {
   return state;
 }
 
+// ── Preferences (workflow toggles) ────────────────────────────────────────
+//
+// Preferences live on the top-level state.json under `preferences`. They are
+// workflow defaults that apply across all sessions in a project (e.g. whether
+// new review batches start with a low-fidelity wireframe before hi-fi).
+//
+// Reading a project with no preferences returns the defaults. Writing
+// validates against state.schema.json#properties.preferences.
+
+const DEFAULT_PREFERENCES = Object.freeze({
+  wireframeFirst: true,
+});
+
+export function defaultPreferences() {
+  return { ...DEFAULT_PREFERENCES };
+}
+
+export function readPreferences(storageDir) {
+  const state = readState(storageDir);
+  const prefs = state.preferences || {};
+  // Merge defaults so callers always see every known field.
+  return { ...DEFAULT_PREFERENCES, ...prefs };
+}
+
+export function writePreferences(storageDir, partial) {
+  const state = readState(storageDir);
+  const next = {
+    ...DEFAULT_PREFERENCES,
+    ...(state.preferences || {}),
+    ...(partial && typeof partial === 'object' ? partial : {}),
+  };
+  // Reject unknown keys defensively — schema enforces this on the writeState
+  // call below, but failing here gives a clearer error.
+  for (const key of Object.keys(next)) {
+    if (!(key in DEFAULT_PREFERENCES)) {
+      throw new Error(`Unknown preference: ${key}`);
+    }
+  }
+  state.preferences = next;
+  writeState(storageDir, state);
+  return next;
+}
+
 // ── Session CRUD ──────────────────────────────────────────────────────────
 
 export function sessionExists(mockupDir, slug) {

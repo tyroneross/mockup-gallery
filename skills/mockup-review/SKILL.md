@@ -15,11 +15,17 @@ Use this skill when the user wants Codex to create, review, select, revise, or i
 - `gallery/gallery.html` and `server/gallery-server.mjs` for the local review surface
 - `commands/*.md` remain Claude-oriented companion assets; in Codex, prefer this skill directly
 
-## Scratch-first rule
+## Wireframe-first toggle
 
-Every new review batch should begin with a low-fidelity black-and-white scratch mockup. Use it to test big layout, hierarchy, flow, and content changes quickly with fewer tokens before producing higher-fidelity variants. Name it with a prefix such as `00-scratch-`, `01-scratch-`, `lo-fi-`, or `wireframe-` so the gallery sorts it first.
+The gallery exposes a `Lo-fi first` toggle in the sidebar that controls whether new review batches default to a low-fidelity wireframe step before any hi-fi HTML variants. The preference is persisted at `.mockup-gallery/state.json#preferences.wireframeFirst` and defaults to `true` on a fresh project. Read it before creating new mockups:
 
-Do not start with high-fidelity styling unless the user explicitly asks to skip the scratch step or an approved wireframe already exists.
+- If `wireframeFirst` is `true` (default), begin every new review batch with a low-fidelity black-and-white scratch mockup. Use it to decide big layout, hierarchy, flow, and content changes quickly with fewer tokens before producing higher-fidelity variants. Name it with a prefix such as `00-scratch-`, `01-scratch-`, `lo-fi-`, or `wireframe-` so the gallery sorts it first.
+- If `wireframeFirst` is `false`, the user has opted out — proceed directly to hi-fi HTML mockups for new batches.
+- An approved wireframe that already exists for the screen also satisfies the rule; you may move to hi-fi without a fresh scratch.
+
+The toggle is a default, not a hard block — if the user explicitly asks to skip the scratch step on a specific batch, honor that request without flipping the global toggle.
+
+Read the live preference value from the running gallery via `GET http://localhost:<port>/preferences`, or directly from `.mockup-gallery/state.json` when the server is not running. Treat a missing `preferences` block as `wireframeFirst: true`.
 
 ## Creating mockups in Codex
 

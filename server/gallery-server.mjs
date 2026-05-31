@@ -956,6 +956,34 @@ function handler(req, res) {
     return;
   }
 
+  // GET /preferences — workflow toggles (wireframe-first, etc.)
+  if (req.method === 'GET' && pathname === '/preferences') {
+    try {
+      return json(res, sessionStore.readPreferences(STORAGE_DIR));
+    } catch (e) {
+      return json(res, { error: e.message }, 500);
+    }
+  }
+
+  // POST /preferences — { wireframeFirst?: boolean, ... } → merges + persists
+  if (req.method === 'POST' && pathname === '/preferences') {
+    readBody(req).then(body => {
+      let parsed;
+      try { parsed = JSON.parse(body || '{}'); } catch { return json(res, { error: 'invalid json body' }, 400); }
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return json(res, { error: 'body must be a JSON object' }, 400);
+      }
+      try {
+        const next = sessionStore.writePreferences(STORAGE_DIR, parsed);
+        return json(res, { ok: true, preferences: next });
+      } catch (e) {
+        const code = /Unknown preference|failed schema validation/.test(e.message) ? 400 : 500;
+        return json(res, { error: e.message }, code);
+      }
+    }).catch(e => json(res, { error: e.message }, 500));
+    return;
+  }
+
   // GET /implemented
   if (req.method === 'GET' && pathname === '/implemented') {
     const data = readJsonFile(path.join(STORAGE_DIR, 'implemented.json'));

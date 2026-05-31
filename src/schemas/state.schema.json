@@ -24,6 +24,13 @@
         { "type": "string", "format": "date-time" }
       ],
       "default": null
+    },
+    "preferences": {
+      "type": "object",
+      "properties": {
+        "wireframeFirst": { "type": "boolean", "default": true }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

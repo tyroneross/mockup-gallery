@@ -86,6 +86,29 @@
     .ni-progress { font-size: 9px; color: #5a5a72; flex-shrink: 0; font-family: monospace; }
     .save-status { padding: 0 8px; margin-bottom: 16px; font-size: 10px; color: #5a5a72; text-align: center; }
     .sidebar-footer { margin-top: auto; padding: 12px 8px 0; border-top: 0.5px solid rgba(255,255,255,0.04); }
+    .pref-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 8px; margin-bottom: 8px; border-radius: 6px;
+      background: rgba(255,255,255,0.02); border: 0.5px solid rgba(255,255,255,0.06);
+    }
+    .pref-label { font-size: 11px; color: #9d9db5; }
+    .pref-hint { font-size: 9px; color: #5a5a72; margin-top: 2px; }
+    .pref-toggle {
+      position: relative; width: 28px; height: 16px; border-radius: 10px;
+      background: rgba(255,255,255,0.08); border: 0.5px solid rgba(255,255,255,0.1);
+      cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+    }
+    .pref-toggle::after {
+      content: ''; position: absolute; top: 1.5px; left: 1.5px;
+      width: 11px; height: 11px; border-radius: 50%;
+      background: #5a5a72; transition: all 0.15s;
+    }
+    .pref-toggle.on {
+      background: rgba(129,140,248,0.25); border-color: rgba(129,140,248,0.5);
+    }
+    .pref-toggle.on::after {
+      transform: translateX(12px); background: #818cf8;
+    }
     .key-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
     .kbd {
       display: inline-flex; align-items: center; justify-content: center;
@@ -685,6 +708,13 @@
     <div id="sidebar-nav"><div class="loading">Loading mockups...</div></div>
     <div class="save-status" id="save-status">Auto-saves to file</div>
     <div class="sidebar-footer">
+      <div class="pref-row" id="pref-wireframe-first-row" title="When on, new review batches start with a lo-fi wireframe before hi-fi variants">
+        <div>
+          <div class="pref-label">Lo-fi first</div>
+          <div class="pref-hint">Wireframe before hi-fi</div>
+        </div>
+        <div class="pref-toggle on" id="pref-wireframe-first" role="switch" aria-checked="true" tabindex="0"></div>
+      </div>
       <div class="key-row"><span class="kbd">1</span><span class="key-label">Yay</span></div>
       <div class="key-row"><span class="kbd">2</span><span class="key-label">Nay</span></div>
       <div class="key-row"><span class="kbd">&larr;&rarr;</span><span class="key-label">Navigate</span></div>
@@ -2254,6 +2284,57 @@ async function detectLayoutMode() {
 }
 
 // -- Init -----------------------------------------------------------------
+// ── Workflow preferences (wireframe-first toggle, etc.) ──────────────────
+// Fetches GET /preferences, applies to the sidebar toggle, and wires the
+// click/keyboard handlers to POST changes back. Defaults to wireframe-first
+// ON when the server is unreachable so the toggle never silently misleads.
+function applyWireframeFirstToggle(on) {
+  const el = document.getElementById('pref-wireframe-first');
+  if (!el) return;
+  el.classList.toggle('on', !!on);
+  el.setAttribute('aria-checked', on ? 'true' : 'false');
+}
+
+async function loadPreferences() {
+  let prefs = { wireframeFirst: true };
+  try {
+    const resp = await fetch('/preferences');
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data && typeof data === 'object') prefs = { ...prefs, ...data };
+    }
+  } catch {}
+  applyWireframeFirstToggle(prefs.wireframeFirst);
+
+  const toggleEl = document.getElementById('pref-wireframe-first');
+  if (!toggleEl) return;
+
+  async function flip() {
+    const next = !toggleEl.classList.contains('on');
+    applyWireframeFirstToggle(next); // optimistic
+    try {
+      const r = await fetch('/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wireframeFirst: next }),
+      });
+      if (!r.ok) {
+        // Revert on server reject
+        applyWireframeFirstToggle(!next);
+      }
+    } catch {
+      applyWireframeFirstToggle(!next);
+    }
+  }
+  toggleEl.addEventListener('click', flip);
+  toggleEl.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      flip();
+    }
+  });
+}
+
 async function init() {
   // Version check -- clear on new version
   if (localStorage.getItem(LS_VER) !== GALLERY_VERSION) {
@@ -2274,6 +2355,10 @@ async function init() {
       else Object.keys(acc).forEach(k => { if (acc[k]) ACCEPTED[k] = true; });
     }
   } catch {}
+
+  // Workflow preferences (e.g. wireframe-first toggle) — load + wire UI before
+  // the main data fetch so the toggle reflects persisted state immediately.
+  loadPreferences();
 
   // Fetch all data sources in parallel
   try {
