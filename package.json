@@ -1,6 +1,6 @@
 {
   "name": "mockup-gallery",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Local design review tool for HTML mockups — rate, select, save, and track implementation",
   "type": "module",
   "bin": {
@@ -9,7 +9,14 @@
   "scripts": {
     "start": "node server/gallery-server.mjs"
   },
-  "keywords": ["mockup", "design", "review", "gallery", "claude-code", "plugin"],
+  "keywords": [
+    "mockup",
+    "design",
+    "review",
+    "gallery",
+    "claude-code",
+    "plugin"
+  ],
   "license": "Apache-2.0",
   "engines": {
     "node": ">=18"
