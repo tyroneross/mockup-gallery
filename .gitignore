@@ -1,5 +1,6 @@
 registry.json
 node_modules/
+.archive/
 
 # Never commit accidental project data into the plugin repo.
 # The plugin is meant to operate on OTHER projects; these paths

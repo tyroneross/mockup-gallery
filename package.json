@@ -7,7 +7,8 @@
     "mockup-gallery": "./server/gallery-server.mjs"
   },
   "scripts": {
-    "start": "node server/gallery-server.mjs"
+    "start": "node server/gallery-server.mjs",
+    "test": "node --test test/*.test.mjs"
   },
   "keywords": [
     "mockup",
@@ -15,9 +16,42 @@
     "review",
     "gallery",
     "claude-code",
-    "plugin"
+    "plugin",
+    "codex"
   ],
   "license": "Apache-2.0",
+  "author": {
+    "name": "Tyrone Ross, Jr",
+    "email": "46267523+tyroneross@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/tyroneross/mockup-gallery",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tyroneross/mockup-gallery.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tyroneross/mockup-gallery/issues"
+  },
+  "files": [
+    ".claude-plugin/",
+    ".codex-plugin/",
+    "commands/",
+    "gallery/",
+    "hooks/",
+    "memories/",
+    "server/",
+    "skills/",
+    "src/",
+    "sync/",
+    "CLAUDE.md",
+    "COMMON.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "engines": {
     "node": ">=18"
   }
