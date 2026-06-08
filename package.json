@@ -4,7 +4,7 @@
   "description": "Local design review tool for HTML mockups — rate, select, save, and track implementation",
   "type": "module",
   "bin": {
-    "mockup-gallery": "./server/gallery-server.mjs"
+    "mockup-gallery": "server/gallery-server.mjs"
   },
   "scripts": {
     "start": "node server/gallery-server.mjs",
