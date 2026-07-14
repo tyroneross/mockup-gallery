@@ -17,7 +17,11 @@ permissions:
   id-token: write
 
 jobs:
+  verify-manifests:
+    uses: tyroneross/RossLabs-AI-Toolkit/.github/workflows/verify-plugin-manifests.yml@plugin-ci-v1
+
   publish:
+    needs: verify-manifests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -37,21 +41,6 @@ jobs:
             echo "::error::package.json version ($PKG_VERSION) does not match release tag ($TAG)"
             exit 1
           fi
-
-      - name: Verify plugin manifests are in sync
-        run: |
-          PKG=$(node -p "require('./package.json').version")
-          CLAUDE=$(jq -r '.version // ""' .claude-plugin/plugin.json)
-          CODEX=$(jq -r '.version // ""' .codex-plugin/plugin.json)
-          MARKET=$(jq -r '.metadata.version // ""' .claude-plugin/marketplace.json)
-          # Plugin manifests use auto-SHA (version omitted → resolves to git commit SHA);
-          # only assert consistency for a version that IS set. package.json keeps semver for npm.
-          for pair in "claude-plugin:$CLAUDE" "codex-plugin:$CODEX" "marketplace:$MARKET"; do
-            name=${pair%%:*}; val=${pair#*:}
-            if [ -n "$val" ] && [ "$val" != "$PKG" ]; then
-              echo "::error::version drift: package.json=$PKG $name=$val"; exit 1
-            fi
-          done
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
