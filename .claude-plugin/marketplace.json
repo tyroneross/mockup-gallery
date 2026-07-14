@@ -13,7 +13,6 @@
       "name": "mockup-gallery",
       "source": "./",
       "description": "Visual mockup review gallery with component-level ratings, auto-save to file, selected-build handoff, and Claude Code integration through /mockup-gallery.",
-      "version": "0.5.1",
       "author": {
         "name": "Tyrone Ross"
       },
