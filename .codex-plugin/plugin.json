@@ -2,7 +2,8 @@
   "name": "mockup-gallery",
   "description": "Create, review, select, and implement local HTML mockups from Codex with scratch-first design guidance.",
   "author": {
-    "name": "Tyrone Ross"
+    "name": "Tyrone Ross",
+    "url": "https://github.com/tyroneross"
   },
   "skills": "./skills/",
   "keywords": [
@@ -31,5 +32,7 @@
     ],
     "brandColor": "#2563EB"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "repository": "https://github.com/tyroneross/mockup-gallery",
+  "homepage": "https://github.com/tyroneross/mockup-gallery"
 }
