@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Design review gallery for HTML mockups — rate, select, save, prepare implementation handoff, and track implementation via /mockup-gallery",
-    "version": "0.5.1"
+    "version": "0.5.2"
   },
   "plugins": [
     {

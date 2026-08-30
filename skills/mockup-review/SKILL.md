@@ -1,6 +1,7 @@
 ---
 name: mockup-review
 description: Use to create scratch-first HTML mockups, optionally use image generation for visual assets, launch/review mockups, check selections, align mockups to routes/screens, or implement approved designs from the mockup gallery.
+user-invocable: false
 ---
 
 # Mockup Review
