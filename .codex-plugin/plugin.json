@@ -1,7 +1,6 @@
 {
   "name": "mockup-gallery",
-  "version": "0.5.2",
-  "description": "Create, review, select, and implement local HTML mockups from Codex with scratch-first design guidance.",
+  "description": "Mockup review scatters across screenshots and chat, so the design you approved loses its reasoning before anyone builds it. Mockup Gallery runs a local review gallery that rates mockups and assigns them to routes it detects in your project, then writes every decision and its implementation contract to disk. Your coding agent builds what you actually approved. Start with /mockup-gallery.",
   "author": {
     "name": "Tyrone Ross",
     "url": "https://github.com/tyroneross"
@@ -17,7 +16,7 @@
   "interface": {
     "displayName": "Mockup Gallery",
     "shortDescription": "Create and review local HTML mockups from Codex.",
-    "longDescription": "Mockup Gallery helps Codex create scratch-first HTML mockups, optionally use generated imagery when it improves design review, launch the local gallery, read selections, and port approved designs into production code.",
+    "longDescription": "Mockup review scatters across screenshots and chat, so the design you approved loses its reasoning before anyone builds it. Mockup Gallery runs a local review gallery that rates mockups and assigns them to routes it detects in your project, then writes every decision and its implementation contract to disk. Your coding agent builds what you actually approved. Start with /mockup-gallery.",
     "developerName": "Ross Labs",
     "category": "Design",
     "capabilities": [

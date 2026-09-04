@@ -1,7 +1,6 @@
 {
   "name": "mockup-gallery",
-  "version": "0.5.2",
-  "description": "Visual mockup review with component-level ratings",
+  "description": "Mockup review scatters across screenshots and chat, so the design you approved loses its reasoning before anyone builds it. Mockup Gallery runs a local review gallery that rates mockups and assigns them to routes it detects in your project, then writes every decision and its implementation contract to disk. Your coding agent builds what you actually approved. Start with /mockup-gallery.",
   "author": {
     "name": "Tyrone Ross",
     "url": "https://github.com/tyroneross"

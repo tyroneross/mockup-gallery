@@ -4,6 +4,13 @@ A local design review tool for browsing, rating, and selecting HTML mockups. Wor
 
 ## Quick Start
 
+**As a Claude Code or Codex plugin**, type `/mockup-gallery`. That one command is the entry point
+for everything: launch the review gallery, read ratings and selections, manage sessions, and hand
+approved designs to your coding agent. To report a plugin bug or request a feature, use
+`/mockup-gallery:submit-feedback`.
+
+**As a standalone CLI**:
+
 ```bash
 # From your project directory (must have a mockups/ folder with .html files)
 npx mockup-gallery
@@ -78,6 +85,7 @@ Or add to `.claude/plugins.json`:
 
 - **SessionStart hook** — Shows design review status (ratings, pending items, implementation progress)
 - **`/mockup-gallery`** — Single Claude Code entry point for launch, status, feedback, sessions, selected-build handoff, implementation guidance, and sync checks
+- **`/mockup-gallery:submit-feedback`** — Report a plugin bug or request a feature; drafts the GitHub issue and files it only after you approve the text
 - **Implementation handoff guidance** — Before coding selected UI, Claude can use `/mockup-gallery implement` or `/mockup-gallery handoff` to map changed UI elements to static/dynamic data, actions, connectors, visualizations, and unresolved questions
 
 ## Data Storage

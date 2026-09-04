@@ -148,3 +148,8 @@ If gaps are found, show the exact gaps and propose patches. If no gaps are found
 - If a selected item has `changeNote`, implement only that described change.
 - For new review batches, create the scratch mockup before high-fidelity variants.
 - Keep implementation handoff concise: only include data that helps a human or LLM build correctly.
+
+## Plugin bugs and feature requests
+
+For a bug or a feature request about the plugin itself, use `/mockup-gallery:submit-feedback`. It
+drafts the GitHub issue and files it only after the user approves the exact text.
