@@ -2,6 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "node",
   "include-v-in-tag": true,
+  "last-release-sha": "835acddd9ed7827c3ff8b1402d3ca47eb9b060ce",
   "changelog-sections": [
     {
       "type": "feat",
@@ -58,8 +59,7 @@
   "packages": {
     ".": {
       "package-name": "mockup-gallery",
-      "changelog-path": "CHANGELOG.md",
-      "last-release-sha": "835acddd9ed7827c3ff8b1402d3ca47eb9b060ce"
+      "changelog-path": "CHANGELOG.md"
     }
   }
 }
