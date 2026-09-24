@@ -24,3 +24,6 @@ node_modules/
 
 # Build-loop scratch directories (self-test workspaces)
 /.build-loop/tmp/
+
+# build-loop runtime state (local only)
+.build-loop/
