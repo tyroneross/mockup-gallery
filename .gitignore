@@ -27,3 +27,6 @@ node_modules/
 
 # build-loop runtime state (local only)
 .build-loop/
+
+# bookmark session snapshots (generated, machine-specific)
+.bookmark/
