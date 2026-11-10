@@ -477,7 +477,7 @@ if (memLines.length > 0) {
 - [ ] **Step 5: Test the hook manually**
 
 ```bash
-cd /Users/tyroneross/Desktop/git-folder/mockup-gallery
+cd <repos-root>/mockup-gallery
 CLAUDE_PLUGIN_ROOT="$(pwd)" node hooks/check-pending.mjs
 ```
 
@@ -486,8 +486,8 @@ Expected: exits silently (no `.mockup-gallery/` in the gallery repo itself). No 
 - [ ] **Step 6: Test with a project that has gallery data**
 
 ```bash
-cd /Users/tyroneross/Desktop/git-folder/atomize-ai
-CLAUDE_PLUGIN_ROOT="/Users/tyroneross/Desktop/git-folder/mockup-gallery" node /Users/tyroneross/Desktop/git-folder/mockup-gallery/hooks/check-pending.mjs
+cd <repos-root>/atomize-ai
+CLAUDE_PLUGIN_ROOT="<repos-root>/mockup-gallery" node <repos-root>/mockup-gallery/hooks/check-pending.mjs
 ```
 
 Expected: existing status output appears. Check that `registry.json` was created in the mockup-gallery repo with an `atomize-ai` entry.
@@ -495,7 +495,7 @@ Expected: existing status output appears. Check that `registry.json` was created
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/tyroneross/Desktop/git-folder/mockup-gallery
+cd <repos-root>/mockup-gallery
 git add hooks/check-pending.mjs
 git commit -m "feat: auto-register projects and surface global memories on SessionStart"
 ```
@@ -722,7 +722,7 @@ Add to the `commands` object:
 - [ ] **Step 4: Test the sync script**
 
 ```bash
-cd /Users/tyroneross/Desktop/git-folder/mockup-gallery
+cd <repos-root>/mockup-gallery
 CLAUDE_PLUGIN_ROOT="$(pwd)" node sync/check-alignment.mjs
 ```
 
@@ -776,7 +776,7 @@ git commit -m "chore: bump version to 0.4.0 for global plugin release"
 - [ ] **Step 1: Verify plugin structure**
 
 ```bash
-cd /Users/tyroneross/Desktop/git-folder/mockup-gallery
+cd <repos-root>/mockup-gallery
 ls COMMON.md CLAUDE.md AGENTS.md plugin.json package.json .gitignore
 ls memories/global/design-preferences.md memories/global/implementation-lessons.md
 ls sync/check-alignment.mjs

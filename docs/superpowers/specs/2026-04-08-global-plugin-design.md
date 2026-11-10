@@ -49,7 +49,7 @@ Auto-populated when the gallery server or hooks run against a project.
 {
   "projects": {
     "atomize-ai": {
-      "path": "/Users/tyroneross/Desktop/git-folder/atomize-ai",
+      "path": "<repos-root>/atomize-ai",
       "lastSeen": "2026-04-08T12:00:00Z"
     }
   }
@@ -187,7 +187,7 @@ Reads from `CLAUDE_PLUGIN_ROOT/memories/` and formats for Claude Code context.
 
 ```bash
 # Global install for Claude Code
-claude plugin add /Users/tyroneross/Desktop/git-folder/mockup-gallery
+claude plugin add <repos-root>/mockup-gallery
 
 # Or from any project
 claude plugin add --global mockup-gallery
